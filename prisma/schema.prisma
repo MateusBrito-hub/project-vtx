@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Plan {
+  id       Int      @id @default(autoincrement())
+  name     String
+  price    Decimal
+  maxDocs  Int
+  clients  Client[]
+}
+
+model Client {
+  id            Int       @id @default(autoincrement())
+  socialName    String    @unique
+  fantasyName   String
+  CPF_CNPJ      String    @unique
+  IE            String?   
+  IM            String?    
+  owner         String
+  ownerDocument String     
+  address       String
+  district      String
+  complement    String
+  UF            String
+  zipCode       String
+  slug          String    @unique
+  contact       String
+  email         String   
+  planId        Int
+  status        String    @default("active") // active | suspended | canceled
+  createdAt     DateTime  @default(now())
+
+  plan         Plan          @relation(fields: [planId], references: [id])
+  subscription Subscription?
+}
+
+model Subscription {
+  id        Int       @id @default(autoincrement())
+  clientId  Int       @unique
+  startDate DateTime  @default(now())
+  endDate   DateTime?
+  status    String    @default("active")
+  amount    Decimal
+
+  client Client @relation(fields: [clientId], references: [id])
+}

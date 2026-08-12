@@ -1,14 +1,17 @@
 import { Request, Response } from 'express'
+import { generateToken } from '../utils/jwtGenerate'
 import {
+    createClientWithSubscription,
     getAllClients,
     getClientById,
-    getClientByName,
-    registerClient,
-    updateClientById
+    getClientBySlug,
+    updateClientById,
+    suspendClientById,
+    cancelClientById,
+    activeClientById
 } from '../service/client'
 import { IClient } from '../shared/interface/client'
-import { isString } from 'util'
-import { isNumberObject, isStringObject } from 'util/types'
+import { string } from 'yup'
 
 export async function createClient(
     req: Request<{}, {}, IClient>,
@@ -17,13 +20,16 @@ export async function createClient(
     try {
         const body = req.body
 
-        if (!body.name || !body.email || !body.password) {
+        if (!body.socialName || !body.email || !body.planId) {
             return res.status(400).json({
-                error: 'name, email e password são obrigatórios'
+                error: 'socialName, email e planId são obrigatórios'
             })
         }
 
-        const result = await registerClient(body)
+        const result = await createClientWithSubscription({
+            ...body,
+            planId: Number(body.planId)
+        })
 
         return res.status(201).json({
             message: 'Client criado com sucesso',
@@ -58,36 +64,29 @@ export async function getClient(
     res: Response
 ) {
     try {
-        const param = req.params.id
-        const numericId = Number(param)
+        const id = Number(req.params.id)
 
-        if (!isNaN(numericId)) {
-            const client = await getClientById(numericId)
-
-            if (!client) {
-                return res.status(404).json({
-                    error: 'Client não encontrado'
-                })
-            }
-
-            return res.json(client)
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
         }
 
-        const client = await getClientByName(String(param))
+        const tenant = await getClientById(id)
 
-        if (!client) {
+        if (!tenant) {
             return res.status(404).json({
                 error: 'Client não encontrado'
             })
         }
 
-        return res.json(client)
+        return res.json(tenant)
 
-} catch (error: any) {
-    return res.status(500).json({
-        error: error.message
-    })
-}
+    } catch (error: any) {
+        return res.status(500).json({
+            error: error.message
+        })
+    }
 }
 
 export async function updateClient(
@@ -106,7 +105,7 @@ export async function updateClient(
         const updated = await updateClientById(id, req.body)
 
         return res.status(200).json({
-            message: 'Client atualizado com sucesso',
+            message: 'Client atualizada com sucesso',
             data: updated
         })
 
@@ -115,4 +114,103 @@ export async function updateClient(
             error: error.message
         })
     }
+}
+
+export async function suspendClient(
+    req: Request,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const suspended = await suspendClientById(id)
+        return res.status(200).json({
+            message: 'Client suspensa com sucesso',
+            data: suspended
+        })
+
+    } catch (error: any) {
+        return res.status(400).json({
+            error: error.message
+        })
+    }
+}
+
+export async function cancelClient(
+    req: Request,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const canceled = await cancelClientById(id)
+        return res.status(200).json({
+            message: 'Client cancelada com sucesso',
+            data: canceled
+        })
+
+    } catch (error: any) {
+        return res.status(400).json({
+            error: error.message
+        })
+    }
+}
+
+export async function activeClient(
+    req: Request,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const active = await activeClientById(id)
+        return res.status(200).json({
+            message: 'Client ativada com sucesso',
+            data: active
+        })
+
+    } catch (error: any) {
+        return res.status(400).json({
+            error: error.message
+        })
+    }
+}
+
+export async function getSlug(
+    req: Request,
+    res: Response
+) {
+
+    const slug = String(req.params.slug);
+
+    if (!slug) return res.status(400).json({ error: 'Slug é obrigatório' });
+    
+    const tenant = await getClientBySlug(slug);
+
+    if (!tenant) return res.status(404).json({ error: 'Not found' });
+
+    res.json({
+        slug: tenant.slug,
+        name: tenant.socialName,
+        status: tenant.status,
+        plan: tenant.plan
+    })
 }
