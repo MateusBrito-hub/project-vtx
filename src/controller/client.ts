@@ -1,5 +1,4 @@
-import { Request, Response } from 'express'
-import { generateToken } from '../utils/jwtGenerate'
+import { Request, Response } from 'express';
 import {
     createClientWithSubscription,
     getAllClients,
@@ -9,9 +8,8 @@ import {
     suspendClientById,
     cancelClientById,
     activeClientById
-} from '../service/client'
-import { IClient } from '../shared/interface/client'
-import { string } from 'yup'
+} from '../service/client';
+import { IClient } from '../shared/interface/client';
 
 export async function createClient(
     req: Request<{}, {}, IClient>,

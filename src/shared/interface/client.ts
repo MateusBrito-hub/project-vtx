@@ -1,4 +1,4 @@
-interface IClient {
+export interface IClient {
     socialName: string,
     fantasyName: string,
     CPF_CNPJ: string,
@@ -17,7 +17,3 @@ interface IClient {
     planId: number
 }
 
-
-export {
-    IClient
-}
