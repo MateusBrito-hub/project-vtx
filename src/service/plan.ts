@@ -26,3 +26,32 @@ export async function createPlan(data: IPlan) {
         }
     })
 }
+
+export async function updatePlan(id: number, data: IPlan) {
+    return await prisma.plan.update({
+        where: { id },
+        data: {
+            name: data.name,
+            price: data.price,
+            maxDocs: data.maxDocs
+        }
+    })
+}
+
+export async function suspendPlan(id: number) {
+    return await prisma.plan.update({
+        where: { id },
+        data: {
+            status: 'suspended'
+        }
+    })
+}
+
+export async function activatePlan(id: number) {
+    return await prisma.plan.update({
+        where: { id },
+        data: {
+            status: 'active'
+        }
+    })
+}

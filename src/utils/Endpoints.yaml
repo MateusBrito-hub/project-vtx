@@ -1,0 +1,320 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: VTX Core
+meta:
+  id: wrk_89a25adc7ca445e589c05bb83e035c24
+  created: 1737508363611
+  modified: 1786621757288
+  description: ""
+collection:
+  - name: Client
+    meta:
+      id: fld_d902943ca15c4bbfb28556834a2e94ca
+      created: 1786553652455
+      modified: 1786628026590
+      sortKey: -1786553652455
+      description: ""
+    children:
+      - url: "{{ _.baseURL }}client"
+        name: Get All Clients
+        meta:
+          id: req_77cb673fcea843eab291b2536abc29fb
+          created: 1786554329879
+          modified: 1786642763755
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329880
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseURL }}client"
+        name: Create Client
+        meta:
+          id: req_5bd2610a97bc48598d9c1f8f88dc26b5
+          created: 1786554574516
+          modified: 1786643927814
+          isPrivate: false
+          description: ""
+          sortKey: -1786554574516
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "socialName": "João Silva Silva",
+              "fantasyName": "JS Tech LTDA",
+              "CPF_CNPJ": "12345678902",
+              "IE": "123456789",
+              "IM": "987654321",
+              "owner": "João Silva",
+              "ownerDocument": "12345678901",
+              "address": "Rua Exemplo, 123",
+              "district": "Centro",
+              "complement": "Apto 101",
+              "UF": "SP",
+              "zipCode": "12345-678",
+              "slug": "joaosilvaSilva",
+              "contact": "83999999999",
+              "email": "mail@mail.com",
+              "planId": 1
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseURL }}client/:id"
+        name: Get Client By Id
+        meta:
+          id: req_6ccf405c95ce48debf3a9aa076c1e0a9
+          created: 1786627455715
+          modified: 1786643952290
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329780
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "2"
+      - url: "{{ _.baseURL }}client/:id/update"
+        name: Update Client By Id
+        meta:
+          id: req_1ebff049c0154c4a88384622b96a928d
+          created: 1786627707830
+          modified: 1786644186812
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329680
+        method: PATCH
+        body:
+          mimeType: application/json
+          text: |-
+            {
+              "socialName": "João Silva",
+              "fantasyName": "JS Tech LTDA",
+              "CPF_CNPJ": "12345678907",
+              "IE": "123456789",
+              "IM": "987654321",
+              "owner": "João Silva",
+              "ownerDocument": "12345678901",
+              "address": "Rua Exemplo, 123",
+              "district": "Centro",
+              "complement": "Apto 101",
+              "UF": "SP",
+              "zipCode": "12345-678",
+              "slug": "joaosilva",
+              "contact": "83999999999",
+              "email": "mail@mail.com",
+              "planId": 1
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "2"
+      - url: "{{ _.baseURL }}client/:id/suspend"
+        name: Suspend Client By Id
+        meta:
+          id: req_1f3369de6b794d7fb347bacff9de1365
+          created: 1786627781229
+          modified: 1786644143666
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329630
+        method: PATCH
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "2"
+      - url: "{{ _.baseURL }}client/:id/cancel"
+        name: Cancel Client By Id
+        meta:
+          id: req_201e7cb98bc34ef3957866435e096500
+          created: 1786627798032
+          modified: 1786643959037
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329580
+        method: PATCH
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "2"
+      - url: "{{ _.baseURL }}client/:id/active"
+        name: Active Client By Id
+        meta:
+          id: req_67f1b3f6a71b42d6aa555e386d1aadf9
+          created: 1786627827051
+          modified: 1786644148305
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329530
+        method: PATCH
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "2"
+      - url: "{{ _.baseURL }}client/:slug/status"
+        name: Get Client By Slug
+        meta:
+          id: req_77b1e11129694cfe9f005f86c4f1a824
+          created: 1786627846194
+          modified: 1786643836649
+          isPrivate: false
+          description: ""
+          sortKey: -1786554329730
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: slug
+            value: joaosilva
+    environment:
+      "": ""
+  - name: Plan
+    meta:
+      id: fld_d15dd19088514bf48e1eec183c8dcb06
+      created: 1786641459987
+      modified: 1786641459987
+      sortKey: -1786641459987
+      description: ""
+    children:
+      - url: "{{ _.baseURL }}plan"
+        name: Create Plan
+        meta:
+          id: req_03afab40efb34883aa79444564e43963
+          created: 1786641463556
+          modified: 1786642521875
+          isPrivate: false
+          description: ""
+          sortKey: -1786641463556
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"name": "Plan Test",
+            	"price": 50.00,
+            	"maxDocs": 1000
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseURL }}plan"
+        name: Get All Plans
+        meta:
+          id: req_4eb0c4a47d2c4724815cfd24d1b37e9d
+          created: 1786642711868
+          modified: 1786642767047
+          isPrivate: false
+          description: ""
+          sortKey: -1786641463456
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.baseURL }}plan/:id"
+        name: Get Plans By Id
+        meta:
+          id: req_139bc8c3c6fe4f688f0c15c7e8f96414
+          created: 1786642789848
+          modified: 1786642799470
+          isPrivate: false
+          description: ""
+          sortKey: -1786598018986
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+        pathParameters:
+          - name: id
+            value: "1"
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_abfaa1ea33c412ee7f653788a6a8bad0e0924195
+    created: 1786553631274
+    modified: 1786553631274
+environments:
+  name: Base Environment
+  meta:
+    id: env_abfaa1ea33c412ee7f653788a6a8bad0e0924195
+    created: 1737508363613
+    modified: 1786554387079
+    isPrivate: false
+  data:
+    baseURL: http://localhost:4000/

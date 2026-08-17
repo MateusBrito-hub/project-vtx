@@ -12,6 +12,7 @@ model Plan {
   name     String
   price    Decimal
   maxDocs  Int
+  status   String    @default("active") // active | suspended 
   clients  Client[]
 }
 

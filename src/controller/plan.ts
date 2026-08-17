@@ -2,11 +2,14 @@ import { Request, Response } from 'express';
 import {
     getAllPlans,
     getPlanById,
-    createPlan
+    createPlan,
+    activatePlan,
+    suspendPlan,
+    updatePlan
 } from '../service/plan';
 import { IPlan } from '../shared/interface/plan';
 
-export async function createPlanController(
+export async function registerPlan(
     req: Request<{}, {}, IPlan>,
     res: Response
 ) {
@@ -69,6 +72,104 @@ export async function getPlan(
             })
         }
         return res.json(plan)
+    } catch (error: any) {
+        return res.status(500).json({
+            error: error.message
+        })
+    }
+}
+
+export async function updatePlanById(
+    req: Request<{ id: string }, {}, IPlan>,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const body = req.body
+        if (!body.name || !body.price || !body.maxDocs) {
+            return res.status(400).json({
+                error: 'name, price e maxDocs são obrigatórios'
+            })
+        }
+
+        const plan = await getPlanById(id)
+        if (!plan) {
+            return res.status(404).json({
+                error: 'Plan não encontrado'
+            })
+        }
+
+        const updatedPlan = await updatePlan(id, {
+            ...body,
+            price: Number(body.price),
+            maxDocs: Number(body.maxDocs)
+        })
+
+        return res.json(updatedPlan)
+    } catch (error: any) {
+        return res.status(500).json({
+            error: error.message
+        })
+    }
+}
+
+export async function suspendPlanById(
+    req: Request<{ id: string }>,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const plan = await getPlanById(id)
+        if (!plan) {
+            return res.status(404).json({
+                error: 'Plan não encontrado'
+            })
+        }
+
+        const suspendedPlan = await suspendPlan(id)
+
+        return res.json(suspendedPlan)
+    } catch (error: any) {
+        return res.status(500).json({
+            error: error.message
+        })
+    }
+}
+
+export async function activatePlanById(
+    req: Request<{ id: string }>,
+    res: Response
+) {
+    try {
+        const id = Number(req.params.id)
+        if (isNaN(id)) {
+            return res.status(400).json({
+                error: 'ID inválido'
+            })
+        }
+
+        const plan = await getPlanById(id)
+        if (!plan) {
+            return res.status(404).json({
+                error: 'Plan não encontrado'
+            })
+        }
+
+        const activatedPlan = await activatePlan(id)
+
+        return res.json(activatedPlan)
     } catch (error: any) {
         return res.status(500).json({
             error: error.message
