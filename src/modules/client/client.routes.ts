@@ -8,7 +8,7 @@ import {
     cancelClient,
     activeClient,
     getSlug
-} from '../controller/client'
+} from './client.controller'
 
 const router = Router()
 

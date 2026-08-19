@@ -8,8 +8,8 @@ import {
     suspendClientById,
     cancelClientById,
     activeClientById
-} from '../service/client';
-import { IClient } from '../shared/interface/client';
+} from './client.service';
+import { IClient } from './client.interface';
 
 export async function createClient(
     req: Request<{}, {}, IClient>,

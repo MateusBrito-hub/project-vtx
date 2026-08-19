@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { createClientDatabase } from '../utils/databse-manager'
-import { IClient } from '../shared/interface/client'
+import { createClientDatabase } from '../../shared/database/database-manager'
+import { IClient } from './client.interface'
 
 const prisma = new PrismaClient()
 
