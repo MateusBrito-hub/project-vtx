@@ -7,7 +7,7 @@ import {
     updateClientById,
     suspendClientById,
     cancelClientById,
-    activeClientById
+    activateClientById
 } from './client.service';
 import { IClient } from './client.interface';
 
@@ -179,7 +179,7 @@ export async function activeClient(
             })
         }
 
-        const active = await activeClientById(id)
+        const active = await activateClientById(id)
         return res.status(200).json({
             message: 'Client ativada com sucesso',
             data: active

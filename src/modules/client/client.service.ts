@@ -1,47 +1,63 @@
 import { IClient } from './client.interface'
-import { 
-    create,
-    findAll,
-    findById,
-    findBySlug,
-    updateById,
-    suspendById,
-    cancelById,
-    activateById
-} from './client.repository'
+import { ClientRepository } from './client.repository'
+import { PlanRepository } from '../plan/plan.repository'
+import { SubscriptionRepository } from '../subscription/subscription.repository'
+import { createClientDatabase } from '../../shared/database/database-manager'
+import { prisma } from '../../shared/database/prisma'
 
+const clientRepository = new ClientRepository()
+const planRepository = new PlanRepository()
+const subscriptionRepository = new SubscriptionRepository()
 
 export async function createClientWithSubscription(data: IClient) {
-    return await create(data)
+    const result = await prisma.$transaction(async (tx: any) => {
+        const plan = await planRepository.findById(tx, data.planId)
+        if (!plan) {
+            throw new Error('Plan not found')
+        }
+
+        const client = await clientRepository.create(tx, data)
+
+        const subscription = await subscriptionRepository.create(tx, client.id, plan.price)
+
+        return {
+            client,
+            subscription
+        }
+    })
+
+    await createClientDatabase(result.client.slug)
+
+    return result
 }
 
 export async function getAllClients() {
-    return await findAll()
+    return await clientRepository.findAll()
 }
 
 export async function getClientById(id: number) {
-    return await findById(id)
+    return await clientRepository.findById(id)
 }
 
 export async function getClientBySlug(slug: string) {
-    return await findBySlug(slug)
+    return await clientRepository.findBySlug(slug)
 }
 
 export async function updateClientById(
     id: number,
     data: Partial<IClient>
 ) {
-    return await updateById(id, data)
+    return await clientRepository.updateById(id, data)
 }
 
 export async function suspendClientById(id: number) {
-    return await suspendById(id)
+    return await clientRepository.suspendById(id)
 }
 
 export async function cancelClientById(id: number) {
-    return await cancelById(id)
+    return await clientRepository.cancelById(id)
 }
 
-export async function activeClientById(id: number) {
-    return await activateById(id)
+export async function activateClientById(id: number) {
+    return await clientRepository.activateById(id)
 }

@@ -1,18 +1,11 @@
 import { prisma } from '../../shared/database/prisma'
-import type { Prisma } from '@prisma/client'
 import { IClient } from './client.interface'
-import { createClientDatabase } from '../../shared/database/database-manager'
-import { findByid } from '../plan/plan.repository'
+import { Prisma } from '@prisma/client'
 
-export async function create(data: IClient) {
-    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-        const plan = await findByid(data.planId)
-        
-            if (!plan) {
-                throw new Error('Plano não encontrado')
-            }
+export class ClientRepository {
 
-        const client = await tx.client.create({
+    async create(tx: Prisma.TransactionClient, data: IClient) {
+        return await tx.client.create({
             data: {
                 socialName: data.socialName,
                 fantasyName: data.fantasyName,
@@ -32,98 +25,84 @@ export async function create(data: IClient) {
                 planId: data.planId
             }
         })
-
-        await createClientDatabase(client.slug)
-
-        const subscription = await tx.subscription.create({
-            data: {
-                clientId: client.id,
-                amount: plan.price
+    }
+    
+    async findAll() {
+        return await prisma.client.findMany({
+            include: {
+                plan: true,
+                subscription: true
+            },
+            orderBy: {
+                createdAt: 'desc'
             }
         })
-
-
-        return {
-            client,
-            subscription
-        }
-    })
-}
-
-export async function findAll() {
-    return await prisma.client.findMany({
-        include: {
-            plan: true,
-            subscription: true
-        },
-        orderBy: {
-            createdAt: 'desc'
-        }
-    })
-}
-
-export async function findById(id: number) {
-    return await prisma.client.findUnique({
-        where: { id },
-        include: {
-            plan: true,
-            subscription: true
-        }
-    })
-}
-
-export async function findBySlug(slug: string) {
-    return await prisma.client.findUnique({
-        where: { slug },
-        include: {
-            plan: true,
-            subscription: true
-        }
-    })
-}
-
-export async function updateById(id: number, data: Partial<IClient>) {
-    const client = await prisma.client.findUnique({
-        where: { id }
-    })
-
-    if (!client) {
-        throw new Error('Client não encontrada')
     }
-
-    if ((data as any).database) {
-        throw new Error('Não é permitido alterar o database da client')
+    
+    async findById(id: number) {
+        return await prisma.client.findUnique({
+            where: { id },
+            include: {
+                plan: true,
+                subscription: true
+            }
+        })
     }
-
-    return await prisma.client.update({
-        where: { id },
-        data
-    })
-}
-
-export async function suspendById(id: number) {
-    return await prisma.client.update({
-        where: { id },
-        data: {
-            status: 'suspended'
+    
+    async findBySlug(slug: string) {
+        return await prisma.client.findUnique({
+            where: { slug },
+            include: {
+                plan: true,
+                subscription: true
+            }
+        })
+    }
+    
+    async updateById(id: number, data: Partial<IClient>) {
+        const client = await prisma.client.findUnique({
+            where: { id }
+        })
+    
+        if (!client) {
+            throw new Error('Client não encontrada')
         }
-    })
+    
+        if ((data as any).database) {
+            throw new Error('Não é permitido alterar o database da client')
+        }
+    
+        return await prisma.client.update({
+            where: { id },
+            data
+        })
+    }
+    
+    async suspendById(id: number) {
+        return await prisma.client.update({
+            where: { id },
+            data: {
+                status: 'suspended'
+            }
+        })
+    }
+    
+    async cancelById(id: number) {
+        return await prisma.client.update({
+            where: { id },
+            data: {
+                status: 'cancelled'
+            }
+        })
+    }
+    
+    async activateById(id: number) {
+        return await prisma.client.update({
+            where: { id },
+            data: {
+                status: 'active'
+            }
+        })
+    }
 }
 
-export async function cancelById(id: number) {
-    return await prisma.client.update({
-        where: { id },
-        data: {
-            status: 'cancelled'
-        }
-    })
-}
-
-export async function activateById(id: number) {
-    return await prisma.client.update({
-        where: { id },
-        data: {
-            status: 'active'
-        }
-    })
-}
