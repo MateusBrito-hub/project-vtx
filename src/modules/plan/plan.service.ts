@@ -1,57 +1,31 @@
-import { PrismaClient } from "@prisma/client";
-import { IPlan } from "../shared/interface/plan";
+import { PlanRepository } from './plan.repository'
+import { IPlan } from './plan.interface'
+import { prisma } from '../../shared/database/prisma'
 
-const prisma = new PrismaClient()
+const planRepository = new PlanRepository()
 
 export async function getAllPlans() {
-    return await prisma.plan.findMany({
-        orderBy:{
-            id: 'desc'
-        }
-    })
+    return await planRepository.findAll()
 }
 
 export async function getPlanById(id: number) {
-    return await prisma.plan.findUnique({
-        where: { id }
+    return await prisma.$transaction(async (tx: any) => {
+        return await planRepository.findById(tx, id)
     })
 }
 
 export async function createPlan(data: IPlan) {
-    return await prisma.plan.create({
-        data: {
-            name: data.name,
-            price: data.price,
-            maxDocs: data.maxDocs
-        }
-    })
+    return await planRepository.create(data)
 }
 
 export async function updatePlan(id: number, data: IPlan) {
-    return await prisma.plan.update({
-        where: { id },
-        data: {
-            name: data.name,
-            price: data.price,
-            maxDocs: data.maxDocs
-        }
-    })
+    return await planRepository.updateById(id, data)
 }
 
 export async function suspendPlan(id: number) {
-    return await prisma.plan.update({
-        where: { id },
-        data: {
-            status: 'suspended'
-        }
-    })
+    return await planRepository.suspendById(id)
 }
 
 export async function activatePlan(id: number) {
-    return await prisma.plan.update({
-        where: { id },
-        data: {
-            status: 'active'
-        }
-    })
+    return await planRepository.activateById(id)
 }

@@ -6,7 +6,7 @@ import {
     updatePlanById,
     suspendPlanById,
     activatePlanById
-} from '../controller/plan'
+} from './plan.controller'
 
 const router = Router()
 

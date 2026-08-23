@@ -6,8 +6,8 @@ import {
     activatePlan,
     suspendPlan,
     updatePlan
-} from '../service/plan';
-import { IPlan } from '../shared/interface/plan';
+} from './plan.service';
+import { IPlan } from './plan.interface';
 
 export async function registerPlan(
     req: Request<{}, {}, IPlan>,
@@ -64,17 +64,19 @@ export async function getPlan(
             })
         }
 
-        const plan = await getPlanById(id)
+        const result = await getPlanById(id)
         
-        if (!plan) {
+        if (!result) {
             return res.status(404).json({
                 error: 'Plan não encontrado'
             })
         }
-        return res.json(plan)
+        return res.status(200).json({
+            data: result
+        })
     } catch (error: any) {
         return res.status(500).json({
-            error: error.message
+            error: error.message || 'Erro interno'
         })
     }
 }
