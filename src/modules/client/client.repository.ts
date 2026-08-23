@@ -1,10 +1,11 @@
 import { prisma } from '../../shared/database/prisma'
+import type { Prisma } from '@prisma/client'
 import { IClient } from './client.interface'
 import { createClientDatabase } from '../../shared/database/database-manager'
 import { findByid } from '../plan/plan.repository'
 
 export async function create(data: IClient) {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
         const plan = await findByid(data.planId)
         
             if (!plan) {
