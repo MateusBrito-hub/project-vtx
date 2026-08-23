@@ -46,7 +46,7 @@ model Subscription {
   clientId  Int       @unique
   startDate DateTime  @default(now())
   endDate   DateTime?
-  status    String    @default("active")
+  status    String    @default("active") // active | suspended
   amount    Decimal
 
   client Client @relation(fields: [clientId], references: [id])
