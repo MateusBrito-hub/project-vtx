@@ -1,7 +1,18 @@
 import { Client } from 'pg'
 
 export async function createClientDatabase(clientName: string) {
-    const dbName = `vtx_${clientName.toLowerCase().replace(/\s+/g, '_')}`
+
+    const safeName = clientName
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, "")
+
+    if(!safeName) {
+        throw new Error("Nome de cliente inválido para criação de banco de dados")
+    }
+
+    const dbName = `vtx_${safeName}`.substring(0,63)
 
     const client = new Client({
         connectionString: process.env.DATABASE_URL?.replace(/\/[^/]+$/, '/postgres')

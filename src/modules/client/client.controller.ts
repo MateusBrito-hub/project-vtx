@@ -24,6 +24,16 @@ export async function createClient(
             })
         }
 
+        if(body.slug) {
+            const slugRegex = /^[a-z0-9-]=$/
+
+            if(!slugRegex.test(body.slug)) {
+                return res.status(400).json({
+                    error: 'Formato de slug inválido. Use apenas letras minúsculas, números e hífens sem espaços.'
+                })
+            }
+        }
+
         const result = await createClientWithSubscription({
             ...body,
             planId: Number(body.planId)
