@@ -51,3 +51,21 @@ model Subscription {
 
   client Client @relation(fields: [clientId], references: [id])
 }
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  OPERATOR
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(OPERATOR)
+  active       Boolean  @default(true)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

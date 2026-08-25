@@ -91,7 +91,7 @@ export class ClientRepository {
         return await prisma.client.update({
             where: { id },
             data: {
-                status: 'cancelled'
+                status: 'canceled'
             }
         })
     }
