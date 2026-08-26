@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { ZodError } from 'zod';
 import {
     createClientWithSubscription,
     getAllClients,
@@ -9,35 +10,19 @@ import {
     cancelClientById,
     activateClientById
 } from './client.service';
-import { IClient } from './client.interface';
+import {
+    createClientSchema,
+    updateClientSchema,
+} from './client.schema'
 
 export async function createClient(
-    req: Request<{}, {}, IClient>,
+    req: Request,
     res: Response
 ) {
     try {
-        const body = req.body
+        const data = createClientSchema.parse(req.body)
 
-        if (!body.socialName || !body.email || !body.planId) {
-            return res.status(400).json({
-                error: 'socialName, email e planId são obrigatórios'
-            })
-        }
-
-        if(body.slug) {
-            const slugRegex = /^[a-z0-9-]=$/
-
-            if(!slugRegex.test(body.slug)) {
-                return res.status(400).json({
-                    error: 'Formato de slug inválido. Use apenas letras minúsculas, números e hífens sem espaços.'
-                })
-            }
-        }
-
-        const result = await createClientWithSubscription({
-            ...body,
-            planId: Number(body.planId)
-        })
+        const result = await createClientWithSubscription(data)
 
         return res.status(201).json({
             message: 'Client criado com sucesso',
@@ -59,10 +44,12 @@ export async function getClients(
 ) {
     try {
         const tenants = await getAllClients()
+
+
         return res.json(tenants)
-    } catch (error: any) {
+    } catch (error) {
         return res.status(500).json({
-            error: error.message
+            error: 'Erro interno do servidor'
         })
     }
 }
@@ -81,7 +68,6 @@ export async function getClient(
         }
 
         const tenant = await getClientById(id)
-
         if (!tenant) {
             return res.status(404).json({
                 error: 'Client não encontrado'
@@ -90,9 +76,9 @@ export async function getClient(
 
         return res.json(tenant)
 
-    } catch (error: any) {
+    } catch (error) {
         return res.status(500).json({
-            error: error.message
+            error: 'Erro interno do servidor'
         })
     }
 }
@@ -110,7 +96,9 @@ export async function updateClient(
             })
         }
 
-        const updated = await updateClientById(id, req.body)
+        const data = updateClientSchema.parse(req.body)
+
+        const updated = await updateClientById(id, data)
 
         return res.status(200).json({
             message: 'Client atualizada com sucesso',
@@ -143,9 +131,9 @@ export async function suspendClient(
             data: suspended
         })
 
-    } catch (error: any) {
-        return res.status(400).json({
-            error: error.message
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Erro interno do servidor'
         })
     }
 }
@@ -169,9 +157,9 @@ export async function cancelClient(
             data: canceled
         })
 
-    } catch (error: any) {
-        return res.status(400).json({
-            error: error.message
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Erro interno do servidor'
         })
     }
 }
@@ -195,9 +183,9 @@ export async function activeClient(
             data: active
         })
 
-    } catch (error: any) {
-        return res.status(400).json({
-            error: error.message
+    } catch (error) {
+        return res.status(500).json({
+            error: 'Erro interno do servidor'
         })
     }
 }
@@ -210,7 +198,7 @@ export async function getSlug(
     const slug = String(req.params.slug);
 
     if (!slug) return res.status(400).json({ error: 'Slug é obrigatório' });
-    
+
     const tenant = await getClientBySlug(slug);
 
     if (!tenant) return res.status(404).json({ error: 'Not found' });

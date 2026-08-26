@@ -1,6 +1,6 @@
 import { prisma } from '../../shared/database/prisma'
 import { IPlan } from './plan.interface'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../../generated/prisma/client'
 
 export class PlanRepository {
 
@@ -15,10 +15,14 @@ export class PlanRepository {
     }
 
     async findById(tx: Prisma.TransactionClient, id: number) {
-        return await tx.plan.findUnique({
+        const transactionClient = tx as Prisma.TransactionClient & {
+            plan: typeof prisma.plan
+        }
+
+        return await transactionClient.plan.findUnique({
             where: { id }
         })
-    }   
+    }
 
     async findAll() {
         return await prisma.plan.findMany({
