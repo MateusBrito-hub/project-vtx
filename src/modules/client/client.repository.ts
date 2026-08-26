@@ -1,10 +1,10 @@
 import { prisma } from '../../shared/database/prisma'
 import { IClient } from './client.interface'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../../generated/prisma/client'
 
 export class ClientRepository {
 
-    async create(tx: Prisma.TransactionClient & { client: typeof prisma.client }, data: IClient) {
+    async create(tx: Prisma.TransactionClient, data: IClient) {
         return await tx.client.create({
             data: {
                 socialName: data.socialName,

@@ -1,6 +1,6 @@
 import { prisma } from '../../shared/database/prisma'
 import { IPlan } from './plan.interface'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../../generated/prisma/client'
 
 export class PlanRepository {
 

@@ -1,6 +1,6 @@
 import { prisma } from '../../shared/database/prisma'
 import { ISubscription } from './subscription.interface'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../../generated/prisma/client'
 
 export class SubscriptionRepository {
     async create(tx: Prisma.TransactionClient, clientId: number, amount: number) {
