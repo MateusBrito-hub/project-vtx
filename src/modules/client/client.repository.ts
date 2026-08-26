@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client'
 
 export class ClientRepository {
 
-    async create(tx: Prisma.TransactionClient, data: IClient) {
+    async create(tx: Prisma.TransactionClient & { client: typeof prisma.client }, data: IClient) {
         return await tx.client.create({
             data: {
                 socialName: data.socialName,

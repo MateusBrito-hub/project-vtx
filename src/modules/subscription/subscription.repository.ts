@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client'
 
 export class SubscriptionRepository {
     async create(tx: Prisma.TransactionClient, clientId: number, amount: number) {
-        return await tx.subscription.create({
+        return await (tx as any).subscription.create({
             data: {
                 clientId,
                 amount

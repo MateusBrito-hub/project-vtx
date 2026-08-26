@@ -3,7 +3,9 @@
 import { prisma } from '../../shared/database/prisma'
 
 export async function findUserByEmail(email: string) {
-    return prisma.user.findUnique({
+    const userModel = (prisma as any).user
+
+    return userModel.findUnique({
         where: {
             email: email.toLowerCase(),
         },
