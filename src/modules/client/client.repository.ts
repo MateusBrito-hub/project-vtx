@@ -1,6 +1,6 @@
 import { prisma } from '../../shared/database/prisma'
 import { IClient } from './client.interface'
-import { Prisma } from '@prisma/client'
+import { Prisma } from '../../generated/prisma/client'
 
 export class ClientRepository {
 

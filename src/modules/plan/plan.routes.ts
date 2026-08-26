@@ -7,14 +7,15 @@ import {
     suspendPlanById,
     activatePlanById
 } from './plan.controller'
+import { requireRole } from '../../shared/auth/role.middleware'
 
 const router = Router()
 
-router.post('/', registerPlan)
-router.get('/', getPlans)
-router.get('/:id', getPlan)
-router.patch('/:id', updatePlanById)
-router.patch('/:id/suspend', suspendPlanById)
-router.patch('/:id/activate', activatePlanById)
+router.post('/', requireRole('SUPER_ADMIN'), registerPlan)
+router.get('/', requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATOR'), getPlans)
+router.get('/:id', requireRole('SUPER_ADMIN', 'ADMIN', 'OPERATOR'), getPlan)
+router.patch('/:id', requireRole('SUPER_ADMIN', 'ADMIN'), updatePlanById)
+router.patch('/:id/suspend', requireRole('SUPER_ADMIN',), suspendPlanById)
+router.patch('/:id/activate', requireRole('SUPER_ADMIN',), activatePlanById)
 
 export default router
