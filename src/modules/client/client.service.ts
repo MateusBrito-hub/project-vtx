@@ -1,15 +1,19 @@
-import { IClient } from './client.interface'
 import { ClientRepository } from './client.repository'
 import { PlanRepository } from '../plan/plan.repository'
 import { SubscriptionRepository } from '../subscription/subscription.repository'
 import { createClientDatabase } from '../../shared/database/database-manager'
 import { prisma } from '../../shared/database/prisma'
+import {
+    CreateClientDTO,
+    UpdateClientDTO
+} from './client.schema'
+
 
 const clientRepository = new ClientRepository()
 const planRepository = new PlanRepository()
 const subscriptionRepository = new SubscriptionRepository()
 
-export async function createClientWithSubscription(data: IClient) {
+export async function createClientWithSubscription(data: CreateClientDTO) {
     const result = await prisma.$transaction(async (tx: any) => {
         const plan = await planRepository.findById(tx, data.planId)
         if (!plan) {
@@ -18,7 +22,7 @@ export async function createClientWithSubscription(data: IClient) {
 
         const client = await clientRepository.create(tx, data)
 
-        const subscription = await subscriptionRepository.create(tx, client.id, plan.price)
+        const subscription = await subscriptionRepository.create(tx, client.id, plan.price.toNumber())
 
         return {
             client,
@@ -45,7 +49,7 @@ export async function getClientBySlug(slug: string) {
 
 export async function updateClientById(
     id: number,
-    data: Partial<IClient>
+    data: UpdateClientDTO
 ) {
     return await clientRepository.updateById(id, data)
 }
