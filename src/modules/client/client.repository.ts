@@ -1,27 +1,28 @@
 import { prisma } from '../../shared/database/prisma'
-import { IClient } from './client.interface'
 import { Prisma } from '../../generated/prisma/client'
+import { CreateClientDTO, UpdateClientDTO } from './client.schema'
+
 
 export class ClientRepository {
 
-    async create(tx: Prisma.TransactionClient, data: IClient) {
+    async create(tx: Prisma.TransactionClient, data: CreateClientDTO) {
         return await tx.client.create({
             data: {
                 socialName: data.socialName,
                 fantasyName: data.fantasyName,
                 CPF_CNPJ: data.CPF_CNPJ,
-                IE: data.IE,
-                IM: data.IM,
+                IE: data.IE ?? '',
+                IM: data.IM ?? '',
                 owner: data.owner,
-                ownerDocument: data.ownerDocument,
+                ownerDocument: data.ownerDocument ?? '',
                 address: data.address,
                 district: data.district,
-                complement: data.complement,
-                UF: data.UF,
-                zipCode: data.zipCode,
+                complement: data.complement ?? '',
+                UF: data.UF ?? '',
+                zipCode: data.zipCode ?? '',
                 slug: data.slug,
-                contact: data.contact,
-                email: data.email,
+                contact: data.contact ?? '',
+                email: data.email ?? '',
                 planId: data.planId
             }
         })
@@ -59,7 +60,7 @@ export class ClientRepository {
         })
     }
     
-    async updateById(id: number, data: Partial<IClient>) {
+    async updateById(id: number, data: UpdateClientDTO) {
         const client = await prisma.client.findUnique({
             where: { id }
         })
