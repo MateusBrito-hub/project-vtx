@@ -1,14 +1,15 @@
 import express from 'express'
-import cors from 'cors'
+import { corsMiddleware } from './shared/config/cors'
 import routes from './routes'
 
 export const app = express()
 
-app.use(cors())
+app.use(corsMiddleware)
 app.use(express.json())
-
-app.use(routes)
 
 app.get('/health', (req, res) => {
     return res.json({ status: 'running' })
 })
+
+app.use(routes)
+
