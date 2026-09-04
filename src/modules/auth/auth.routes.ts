@@ -2,9 +2,10 @@
 
 import { Router } from 'express'
 import { login } from './auth.controller'
+import { loginRateLimiter } from './auth.limiter'
 
 const router = Router()
 
-router.post('/login', login)
+router.post('/login', loginRateLimiter, login)
 
 export default router
