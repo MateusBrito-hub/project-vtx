@@ -1,7 +1,11 @@
 // test/helmet.test.ts
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import request from 'supertest'
 import { app } from '../src/app'
+
+vi.mock('../src/shared/database/prisma', () => ({
+    prisma: {},
+}))
 
 describe('Helmet Security Headers (TASK 05)', () => {
     it('deve incluir os cabeçalhos de segurança essenciais nas respostas', async () => {
