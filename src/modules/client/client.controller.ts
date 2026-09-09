@@ -14,6 +14,7 @@ import {
     createClientSchema,
     updateClientSchema,
 } from './client.schema'
+import { handleInternalError, handleZodError } from '../../shared/errors/error-handler';
 
 export async function createClient(
     req: Request,
@@ -30,11 +31,10 @@ export async function createClient(
         })
 
     } catch (error: any) {
-        console.error(error)
-
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -47,10 +47,11 @@ export async function getClients(
 
 
         return res.json(tenants)
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Erro interno do servidor'
-        })
+    } catch (error: any) {
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -76,10 +77,11 @@ export async function getClient(
 
         return res.json(tenant)
 
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Erro interno do servidor'
-        })
+    } catch (error: any) {
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -106,9 +108,10 @@ export async function updateClient(
         })
 
     } catch (error: any) {
-        return res.status(400).json({
-            error: error.message
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -131,10 +134,11 @@ export async function suspendClient(
             data: suspended
         })
 
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Erro interno do servidor'
-        })
+    } catch (error: any) {
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -157,10 +161,11 @@ export async function cancelClient(
             data: canceled
         })
 
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Erro interno do servidor'
-        })
+    } catch (error: any) {
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -183,10 +188,11 @@ export async function activeClient(
             data: active
         })
 
-    } catch (error) {
-        return res.status(500).json({
-            error: 'Erro interno do servidor'
-        })
+    } catch (error: any) {
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 

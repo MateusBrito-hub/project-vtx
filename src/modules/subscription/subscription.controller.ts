@@ -10,6 +10,7 @@ import {
 } from './subscription.service';
 import { ZodError } from 'zod'
 import { createSubscriptionSchema, updateSubscriptionSchema } from './subscription.schema'
+import { handleInternalError, handleZodError } from '../../shared/errors/error-handler';
 
 export async function registerSubscription(
     req: Request,
@@ -19,23 +20,16 @@ export async function registerSubscription(
         // Validação estrita em runtime
         const data = createSubscriptionSchema.parse(req.body)
         const result = await createSubscription(data)
-        
+
         return res.status(201).json({
             message: 'Subscription criada com sucesso',
             data: result
         })
     } catch (error: any) {
         if (error instanceof ZodError) {
-            return res.status(400).json({
-                error: 'Erro de validação',
-                details: error.flatten().fieldErrors,
-                issues: error.issues.map(i => i.message)
-            })
+            return handleZodError(res, error)
         }
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        return handleInternalError(res, error)
     }
 }
 
@@ -49,10 +43,10 @@ export async function getSubscriptions(
             data: result
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -61,15 +55,15 @@ export async function getSubscription(
     res: Response
 ) {
     try {
-        const id  = Number(req.params.id)
+        const id = Number(req.params.id)
         if (isNaN(id)) {
             return res.status(400).json({
                 error: 'ID inválido'
             })
         }
-        
+
         const result = await getSubscriptionById(id)
-        
+
         if (!result) {
             return res.status(404).json({
                 error: 'Subscription não encontrada'
@@ -79,10 +73,10 @@ export async function getSubscription(
             data: result
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -110,10 +104,10 @@ export async function getSubscriptionByClient(
             data: result
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -140,18 +134,10 @@ export async function updateSubscriptionById(
             data: updatedSubscription
         })
     } catch (error: any) {
-        // Trata erro de validação do Zod como HTTP 400 amigável
         if (error instanceof ZodError) {
-            return res.status(400).json({
-                error: 'Erro de validação',
-                details: error.flatten().fieldErrors,
-                issues: error.issues.map(i => i.message)
-            })
+            return handleZodError(res, error)
         }
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        return handleInternalError(res, error)
     }
 }
 
@@ -180,10 +166,10 @@ export async function suspendSubscription(
             data: suspendedSubscription
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -210,9 +196,9 @@ export async function activateSubscription(
             data: activatedSubscription
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }

@@ -8,6 +8,8 @@ import {
     updatePlan
 } from './plan.service';
 import { IPlan } from './plan.interface';
+import { handleInternalError, handleZodError } from '../../shared/errors/error-handler';
+import { ZodError } from 'zod';
 
 export async function registerPlan(
     req: Request<{}, {}, IPlan>,
@@ -31,10 +33,10 @@ export async function registerPlan(
             data: result
         })
     } catch (error: any) {
-        console.error(error)
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -46,9 +48,10 @@ export async function getPlans(
         const plans = await getAllPlans()
         return res.json(plans)
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -65,7 +68,7 @@ export async function getPlan(
         }
 
         const result = await getPlanById(id)
-        
+
         if (!result) {
             return res.status(404).json({
                 error: 'Plan não encontrado'
@@ -75,9 +78,10 @@ export async function getPlan(
             data: result
         })
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message || 'Erro interno'
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -115,9 +119,10 @@ export async function updatePlanById(
 
         return res.json(updatedPlan)
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -144,9 +149,10 @@ export async function suspendPlanById(
 
         return res.json(suspendedPlan)
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message
-        })
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
     }
 }
 
@@ -173,8 +179,9 @@ export async function activatePlanById(
 
         return res.json(activatedPlan)
     } catch (error: any) {
-        return res.status(500).json({
-            error: error.message
-        })
-    }
+        if (error instanceof ZodError) {
+            return handleZodError(res, error)
+        }
+        return handleInternalError(res, error)
+    } 
 }
