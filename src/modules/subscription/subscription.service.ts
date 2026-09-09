@@ -22,7 +22,7 @@ export async function createSubscription(data: CreateSubscriptionDTO) {
     })
 }
 
-export async function updateSubscriptionById(
+export async function updateSubscription(
     id: number,
     data: UpdateSubscriptionDTO
 ) {

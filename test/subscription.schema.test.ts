@@ -21,7 +21,7 @@ vi.mock('../src/shared/database/prisma', () => ({
     },
 }))
 
-import { updateSubscription } from '../src/modules/subscription/subscription.controller'
+import { updateSubscriptionById } from '../src/modules/subscription/subscription.controller'
 import { prisma } from '../src/shared/database/prisma'
 
 describe('Subscription Mass Assignment Protection (TASK 01 - Sprint 2)', () => {
@@ -31,7 +31,7 @@ describe('Subscription Mass Assignment Protection (TASK 01 - Sprint 2)', () => {
         vi.clearAllMocks()
         app = express()
         app.use(express.json())
-        app.patch('/subscriptions/:id', updateSubscription)
+        app.patch('/subscriptions/:id', updateSubscriptionById)
     })
 
     it('deve permitir atualizar amount com valor positivo válido', async () => {

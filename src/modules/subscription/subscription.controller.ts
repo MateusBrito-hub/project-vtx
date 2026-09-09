@@ -6,7 +6,7 @@ import {
     getSubscriptionByClientId,
     getSubscriptionById,
     suspendSubscriptionById,
-    updateSubscriptionById
+    updateSubscription
 } from './subscription.service';
 import { ZodError } from 'zod'
 import { createSubscriptionSchema, updateSubscriptionSchema } from './subscription.schema'
@@ -117,7 +117,7 @@ export async function getSubscriptionByClient(
     }
 }
 
-export async function updateSubscription(
+export async function updateSubscriptionById(
     req: Request<{ id: string }>,
     res: Response
 ) {
@@ -134,7 +134,7 @@ export async function updateSubscription(
             return res.status(404).json({ error: 'Subscription não encontrada' })
         }
         // 3. Atualização segura apenas com campos validados
-        const updatedSubscription = await updateSubscriptionById(id, data)
+        const updatedSubscription = await updateSubscription(id, data)
         return res.status(200).json({
             message: 'Subscription atualizada com sucesso',
             data: updatedSubscription
