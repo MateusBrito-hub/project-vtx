@@ -1,5 +1,5 @@
 import { prisma } from '../../shared/database/prisma'
-import { ISubscription } from './subscription.interface'
+import { UpdateSubscriptionDTO } from './subscription.schema'
 import { Prisma } from '../../generated/prisma/client'
 
 export class SubscriptionRepository {
@@ -24,7 +24,7 @@ export class SubscriptionRepository {
         })
     }
 
-    async updateById(id: number, data: Partial<ISubscription>) {
+    async updateById(id: number, data: Partial<UpdateSubscriptionDTO>) {
         return await prisma.subscription.update({
             where: { id },
             data

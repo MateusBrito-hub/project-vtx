@@ -6,31 +6,32 @@ import {
     getSubscriptionByClientId,
     getSubscriptionById,
     suspendSubscriptionById,
-    updateSubscription
+    updateSubscriptionById
 } from './subscription.service';
-import { ISubscription } from './subscription.interface';
+import { ZodError } from 'zod'
+import { createSubscriptionSchema, updateSubscriptionSchema } from './subscription.schema'
 
 export async function registerSubscription(
-    req: Request<{}, {}, ISubscription>,
+    req: Request,
     res: Response
 ) {
     try {
-        const body  = req.body
-        if (!body.clientId || !body.amount) {
-            return res.status(400).json({
-                error: 'clientId e amount são obrigatórios'
-            })
-        }
-        const result = await createSubscription({
-            clientId: Number(body.clientId),
-            amount: Number(body.amount)
-        })
+        // Validação estrita em runtime
+        const data = createSubscriptionSchema.parse(req.body)
+        const result = await createSubscription(data)
         
         return res.status(201).json({
             message: 'Subscription criada com sucesso',
             data: result
         })
     } catch (error: any) {
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                error: 'Erro de validação',
+                details: error.flatten().fieldErrors,
+                issues: error.issues.map(i => i.message)
+            })
+        }
         console.error(error)
         return res.status(500).json({
             error: error.message || 'Erro interno'
@@ -116,32 +117,37 @@ export async function getSubscriptionByClient(
     }
 }
 
-export async function updateSubscriptionById(
-    req: Request<{ id: string }, {}, Partial<ISubscription>>,
+export async function updateSubscription(
+    req: Request<{ id: string }>,
     res: Response
 ) {
     try {
         const id = Number(req.params.id)
         if (isNaN(id)) {
-            return res.status(400).json({
-                error: 'ID inválido'
-            })
+            return res.status(400).json({ error: 'ID inválido' })
         }
-        const body = req.body
-
+        // 1. Validação em tempo de execução com Zod (.strict())
+        const data = updateSubscriptionSchema.parse(req.body)
+        // 2. Verifica existência prévia
         const subscription = await getSubscriptionById(id)
         if (!subscription) {
-            return res.status(404).json({
-                error: 'Subscription não encontrada'
-            })
+            return res.status(404).json({ error: 'Subscription não encontrada' })
         }
-
-        const updatedSubscription = await updateSubscription(id, body)
-
+        // 3. Atualização segura apenas com campos validados
+        const updatedSubscription = await updateSubscriptionById(id, data)
         return res.status(200).json({
+            message: 'Subscription atualizada com sucesso',
             data: updatedSubscription
         })
     } catch (error: any) {
+        // Trata erro de validação do Zod como HTTP 400 amigável
+        if (error instanceof ZodError) {
+            return res.status(400).json({
+                error: 'Erro de validação',
+                details: error.flatten().fieldErrors,
+                issues: error.issues.map(i => i.message)
+            })
+        }
         console.error(error)
         return res.status(500).json({
             error: error.message || 'Erro interno'

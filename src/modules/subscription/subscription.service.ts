@@ -1,5 +1,5 @@
 import { SubscriptionRepository } from './subscription.repository'
-import { ISubscription } from './subscription.interface'
+import { CreateSubscriptionDTO ,UpdateSubscriptionDTO } from './subscription.schema'
 import { prisma } from '../../shared/database/prisma'
 
 const subscriptionRepository = new SubscriptionRepository()
@@ -16,15 +16,15 @@ export async function getSubscriptionByClientId(clientId: number) {
     return await subscriptionRepository.findByClientId(clientId)
 }
 
-export async function createSubscription(data: ISubscription) {
+export async function createSubscription(data: CreateSubscriptionDTO) {
     return await prisma.$transaction(async (tx: any) => {
         return await subscriptionRepository.create(tx, data.clientId, data.amount)
     })
 }
 
-export async function updateSubscription(
+export async function updateSubscriptionById(
     id: number,
-    data: Partial<ISubscription>
+    data: UpdateSubscriptionDTO
 ) {
     return await subscriptionRepository.updateById(id, data)
 }
