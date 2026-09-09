@@ -10,8 +10,11 @@ RUN npm install --legacy-peer-deps
 
 COPY . .
 
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+
 RUN npx prisma generate
 
 EXPOSE 4000
 
-CMD ["sh", "-c", "npx prisma migrate dev --name init && npm run dev"]
+CMD ["npm", "run", "dev"]
