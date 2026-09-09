@@ -4,7 +4,7 @@
 `TASK 01 (Sprint 2) — Schema Zod e Proteção contra Mass Assignment em Subscriptions`
 
 **Status:**  
-`Em Validação` *(Implementação e testes aprovados; pendente apenas alinhamento de nome de exportação para passar no build)*
+`Concluído`
 
 ---
 
@@ -26,7 +26,7 @@ Foi implementada a blindagem completa contra ataques de **Mass Assignment (atrib
 ```
 
 * **`src/modules/subscription/subscription.schema.ts`** *(Novo)*: Criação dos schemas Zod `createSubscriptionSchema` e `updateSubscriptionSchema` com diretiva `.strict()` e inferência dos tipos TypeScript `CreateSubscriptionDTO` e `UpdateSubscriptionDTO`.
-* **`src/modules/subscription/subscription.controller.ts`**: Substituição da leitura crua de `req.body` por validação estrita via Zod em `registerSubscription` e `updateSubscription`, capturando `ZodError` para retornar HTTP 400 com detalhes das violações.
+* **`src/modules/subscription/subscription.controller.ts`**: Substituição da leitura crua de `req.body` por validação estrita via Zod em `registerSubscription` e `updateSubscriptionById`, capturando `ZodError` para retornar HTTP 400 com detalhes das violações.
 * **`src/modules/subscription/subscription.service.ts`**: Atualização das assinaturas das funções para consumir os DTOs validados (`CreateSubscriptionDTO` e `UpdateSubscriptionDTO`).
 * **`src/modules/subscription/subscription.repository.ts`**: Ajuste da tipagem no método `updateById` para utilizar `UpdateSubscriptionDTO`.
 * **`src/modules/subscription/subscription.interface.ts`** *(Excluído)*: Remoção de interface tipada obsoleta que não garantia validação em runtime.
@@ -67,9 +67,9 @@ Validação de Assinaturas:
 ### 5. Validações executadas
 
 ```text
+npm run build                                                    → PASSOU (compilação TypeScript tsc sem erros)
 npx vitest run test/subscription.schema.test.ts                  → PASSOU (5 testes aprovados em 1.64s)
-npx vitest run test/auth.limiter.test.ts test/cors.test.ts ...  → PASSOU (15 testes aprovados)
-npm run build                                                    → FALHOU (erro de nomenclatura de export TS2724)
+Suíte integrada (Auth Limiter, CORS, Helmet, Subscription)       → PASSOU (20 testes aprovados em 15.02s)
 ```
 
 ---
