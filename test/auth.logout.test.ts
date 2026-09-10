@@ -1,9 +1,11 @@
 // test/auth.logout.test.ts
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import express from 'express'
 
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-project-vtx-2026'
+
+vi.mock('../src/shared/database/prisma', () => ({ prisma: {} }))
 
 import authRoutes from '../src/modules/auth/auth.routes'
 import { authMiddleware } from '../src/shared/auth/auth.middleware'
