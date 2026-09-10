@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { IClient } from '../src/shared/interface/client'
+import { CreateClientDTO, UpdateClientDTO } from '../src/modules/client/client.schema'
 
 // vi.hoisted garante que o mock exista antes do vi.mock ser processado
 const { mockPrismaClient, mockCreateClientDatabase } = vi.hoisted(() => {
@@ -18,26 +18,18 @@ const { mockPrismaClient, mockCreateClientDatabase } = vi.hoisted(() => {
         },
         $transaction: vi.fn(),
     }
-
     const mockCreateClientDatabase = vi.fn()
-
     return { mockPrismaClient, mockCreateClientDatabase }
 })
-
-vi.mock('@prisma/client', () => ({
-    // Precisa ser uma função "normal" (não arrow function).
-    // O vi.fn() invoca a implementação via `new` quando o mock é chamado
-    // com `new PrismaClient()`, e arrow functions não são construtíveis.
-    PrismaClient: vi.fn(function () {
-        return mockPrismaClient
-    })
+// Mock do singleton prisma utilizado por toda a aplicação
+vi.mock('../src/shared/database/prisma', () => ({
+    prisma: mockPrismaClient
 }))
-
-vi.mock('../src/utils/databse-manager', () => ({
+// Mock do criador de banco de dados do tenant
+vi.mock('../src/shared/database/database-manager', () => ({
     createClientDatabase: mockCreateClientDatabase
 }))
-
-// Importa DEPOIS dos mocks, para que client.ts receba o PrismaClient mockado
+// Import dos métodos do service modular atual
 import {
     createClientWithSubscription,
     getAllClients,
@@ -46,10 +38,10 @@ import {
     updateClientById,
     suspendClientById,
     cancelClientById,
-    activeClientById,
-} from '../src/service/client'
+    activateClientById,
+} from '../src/modules/client/client.service'
 
-const mockClientData: IClient = {
+const mockClientData: CreateClientDTO = {
     socialName: 'Empresa Teste LTDA',
     fantasyName: 'Teste',
     CPF_CNPJ: '12345678000199',
@@ -66,25 +58,25 @@ const mockClientData: IClient = {
     contact: '83900000000',
     email: 'contato@empresateste.com',
     planId: 1,
-} as IClient
+}
 
 const mockPlanRecord = {
     id: 1,
     name: 'Plano Básico',
-    price: 99.9,
+    price: {
+        toNumber: () => 99.9,
+    },
 }
-
 const mockClientRecord = {
     id: 1,
     ...mockClientData,
     status: 'active',
     createdAt: new Date('2025-01-01'),
 }
-
 const mockSubscriptionRecord = {
     id: 1,
     clientId: 1,
-    amount: mockPlanRecord.price,
+    amount: 99.9,
 }
 
 beforeEach(() => {
@@ -123,12 +115,12 @@ describe('Client Repository', () => {
             })
         })
 
-        it('deve lançar erro "Plano não encontrado" quando o plano não existir', async () => {
+        it('deve lançar erro "Plan not found" quando o plano não existir', async () => {
             mockPrismaClient.plan.findUnique.mockResolvedValueOnce(null)
 
             await expect(
                 createClientWithSubscription(mockClientData)
-            ).rejects.toThrow('Plano não encontrado')
+            ).rejects.toThrow('Plan not found')
 
             expect(mockPrismaClient.client.create).not.toHaveBeenCalled()
             expect(mockCreateClientDatabase).not.toHaveBeenCalled()
@@ -291,26 +283,26 @@ describe('Client Repository', () => {
     })
 
     describe('cancelClientById', () => {
-        it('deve atualizar o status do client para "cancelled"', async () => {
-            const cancelledRecord = { ...mockClientRecord, status: 'cancelled' }
+        it('deve atualizar o status do client para "canceled"', async () => {
+            const cancelledRecord = { ...mockClientRecord, status: 'canceled' }
             mockPrismaClient.client.update.mockResolvedValueOnce(cancelledRecord)
 
             const result = await cancelClientById(1)
 
             expect(mockPrismaClient.client.update).toHaveBeenCalledWith({
                 where: { id: 1 },
-                data: { status: 'cancelled' }
+                data: { status: 'canceled' }
             })
-            expect(result.status).toBe('cancelled')
+            expect(result.status).toBe('canceled')
         })
     })
 
-    describe('activeClientById', () => {
+    describe('activateClientById', () => {
         it('deve atualizar o status do client para "active"', async () => {
             const activeRecord = { ...mockClientRecord, status: 'active' }
             mockPrismaClient.client.update.mockResolvedValueOnce(activeRecord)
 
-            const result = await activeClientById(1)
+            const result = await activateClientById(1)
 
             expect(mockPrismaClient.client.update).toHaveBeenCalledWith({
                 where: { id: 1 },
