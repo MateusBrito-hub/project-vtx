@@ -15,6 +15,7 @@ import {
     updateClientSchema,
 } from './client.schema'
 import { handleInternalError, handleZodError } from '../../shared/errors/error-handler';
+import { sanitizeClientByRole } from './client.serializer'
 
 export async function createClient(
     req: Request,
@@ -44,9 +45,13 @@ export async function getClients(
 ) {
     try {
         const tenants = await getAllClients()
+        const role = req.user?.role
 
+        const sanitizedTenants = tenants.map(tenant => 
+            sanitizeClientByRole(tenant, role)
+        )
 
-        return res.json(tenants)
+        return res.json(sanitizedTenants)
     } catch (error: any) {
         if (error instanceof ZodError) {
             return handleZodError(res, error)
@@ -75,7 +80,8 @@ export async function getClient(
             })
         }
 
-        return res.json(tenant)
+        const role = req.user?.role
+        return res.json(sanitizeClientByRole(tenant, role))
 
     } catch (error: any) {
         if (error instanceof ZodError) {
