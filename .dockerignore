@@ -5,3 +5,7 @@ npm-debug.log
 dist
 coverage
 .env
+.env.*
+relatorios
+test
+*.md
