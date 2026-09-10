@@ -2,6 +2,7 @@
 
 import { Request, Response } from 'express'
 import { authenticate } from './auth.service'
+import { revokeToken } from '../../shared/auth/token-blacklist'
 
 export async function login(
     req: Request,
@@ -39,4 +40,16 @@ export async function login(
             error: 'Credenciais inválidas',
         })
     }
+}
+
+export async function logout(
+    req: Request,
+    res: Response
+) {
+    if (req.token) {
+        revokeToken(req.token)
+    }
+    return res.status(200).json({
+        message: 'Logout realizado com sucesso',
+    })
 }
