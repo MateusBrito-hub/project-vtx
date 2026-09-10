@@ -106,7 +106,7 @@ describe('Client Repository', () => {
             expect(mockPrismaClient.subscription.create).toHaveBeenCalledWith({
                 data: {
                     clientId: mockClientRecord.id,
-                    amount: mockPlanRecord.price
+                    amount: mockPlanRecord.price.toNumber()
                 }
             })
             expect(result).toEqual({
