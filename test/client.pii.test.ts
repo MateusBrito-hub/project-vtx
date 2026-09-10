@@ -3,44 +3,45 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import request from 'supertest'
 import express from 'express'
 
-// Mock do Prisma para isolar acesso ao banco
-const mockClientList = [
-    {
-        id: 1,
-        socialName: 'Empresa Teste LTDA',
-        fantasyName: 'Teste',
-        CPF_CNPJ: '12345678000199',
-        IE: '123456789',
-        IM: '987654321',
-        owner: 'João Silva',
-        ownerDocument: '12345678900',
-        address: 'Rua Teste, 123',
-        district: 'Centro',
-        complement: 'Sala 1',
-        UF: 'PB',
-        zipCode: '58000000',
-        slug: 'empresa-teste',
-        contact: '83900000000',
-        email: 'contato@empresateste.com',
-        planId: 1,
-        status: 'active',
-        createdAt: new Date('2025-01-01'),
-        plan: { id: 1, name: 'Básico' },
-        subscription: { id: 1, amount: 99.9 }
-    }
-]
-
+// vi.hoisted garante que a lista exista antes do vi.mock ser processado no topo
+const { mockClientList } = vi.hoisted(() => {
+    const mockClientList = [
+        {
+            id: 1,
+            socialName: 'Empresa Teste LTDA',
+            fantasyName: 'Teste',
+            CPF_CNPJ: '12345678000199',
+            IE: '123456789',
+            IM: '987654321',
+            owner: 'João Silva',
+            ownerDocument: '12345678900',
+            address: 'Rua Teste, 123',
+            district: 'Centro',
+            complement: 'Sala 1',
+            UF: 'PB',
+            zipCode: '58000000',
+            slug: 'empresa-teste',
+            contact: '83900000000',
+            email: 'contato@empresateste.com',
+            planId: 1,
+            status: 'active',
+            createdAt: new Date('2025-01-01'),
+            plan: { id: 1, name: 'Básico' },
+            subscription: { id: 1, amount: 99.9 }
+        }
+    ]
+    return { mockClientList }
+})
 vi.mock('../src/shared/database/prisma', () => ({
     prisma: {
         client: {
-            findMany: vi.fn().mockResolvedValue(mockClientList),
+            findMany: vi.fn().mockImplementation(() => Promise.resolve(mockClientList)),
             findUnique: vi.fn().mockImplementation(({ where }: { where: { id: number } }) => {
                 return Promise.resolve(mockClientList.find(c => c.id === where.id) || null)
             })
         }
     }
 }))
-
 import { getClients, getClient } from '../src/modules/client/client.controller'
 
 describe('Proteção de PII para Role OPERATOR (TASK 02 - Sprint 3)', () => {
