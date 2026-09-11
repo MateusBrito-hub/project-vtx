@@ -1,10 +1,11 @@
+// src/modules/plan/plan.repository.ts
 import { prisma } from '../../shared/database/prisma'
-import { IPlan } from './plan.interface'
+import { CreatePlanDTO, UpdatePlanDTO } from './plan.schema'
 import { Prisma } from '../../generated/prisma/client'
 
 export class PlanRepository {
 
-    async create(data: IPlan) {
+    async create(data: CreatePlanDTO) {
         return await prisma.plan.create({
             data: {
                 name: data.name,
@@ -32,14 +33,10 @@ export class PlanRepository {
         })
     }
 
-    async updateById(id: number, data: IPlan) {
+    async updateById(id: number, data: UpdatePlanDTO) {
         return await prisma.plan.update({
             where: { id },
-            data: {
-                name: data.name,
-                price: data.price,
-                maxDocs: data.maxDocs
-            }
+            data
         })
     }
 

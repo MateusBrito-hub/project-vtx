@@ -7,26 +7,18 @@ import {
     suspendPlan,
     updatePlan
 } from './plan.service';
-import { IPlan } from './plan.interface';
+import { createPlanSchema, updatePlanSchema } from './plan.schema'
 import { handleInternalError, handleZodError } from '../../shared/errors/error-handler';
 import { ZodError } from 'zod';
 
 export async function registerPlan(
-    req: Request<{}, {}, IPlan>,
+    req: Request,
     res: Response
 ) {
     try {
-        const body = req.body
-        if (!body.name || !body.price || !body.maxDocs) {
-            return res.status(400).json({
-                error: 'name, price e maxDocs são obrigatórios'
-            })
-        }
-        const result = await createPlan({
-            ...body,
-            price: Number(body.price),
-            maxDocs: Number(body.maxDocs)
-        })
+        const data = createPlanSchema.parse(req.body)
+
+        const result = await createPlan(data)
 
         return res.status(201).json({
             message: 'Plan criado com sucesso',
@@ -86,7 +78,7 @@ export async function getPlan(
 }
 
 export async function updatePlanById(
-    req: Request<{ id: string }, {}, IPlan>,
+    req: Request,
     res: Response
 ) {
     try {
@@ -97,12 +89,7 @@ export async function updatePlanById(
             })
         }
 
-        const body = req.body
-        if (!body.name || !body.price || !body.maxDocs) {
-            return res.status(400).json({
-                error: 'name, price e maxDocs são obrigatórios'
-            })
-        }
+        const data = updatePlanSchema.parse(req.body)
 
         const plan = await getPlanById(id)
         if (!plan) {
@@ -111,11 +98,7 @@ export async function updatePlanById(
             })
         }
 
-        const updatedPlan = await updatePlan(id, {
-            ...body,
-            price: Number(body.price),
-            maxDocs: Number(body.maxDocs)
-        })
+        const updatedPlan = await updatePlan(id, data)
 
         return res.json(updatedPlan)
     } catch (error: any) {

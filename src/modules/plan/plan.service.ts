@@ -1,5 +1,6 @@
+// src/modules/plan/plan.service.ts
 import { PlanRepository } from './plan.repository'
-import { IPlan } from './plan.interface'
+import { CreatePlanDTO, UpdatePlanDTO } from './plan.schema'
 import { prisma } from '../../shared/database/prisma'
 
 const planRepository = new PlanRepository()
@@ -14,11 +15,11 @@ export async function getPlanById(id: number) {
     })
 }
 
-export async function createPlan(data: IPlan) {
+export async function createPlan(data: CreatePlanDTO) {
     return await planRepository.create(data)
 }
 
-export async function updatePlan(id: number, data: IPlan) {
+export async function updatePlan(id: number, data: UpdatePlanDTO) {
     return await planRepository.updateById(id, data)
 }
 
