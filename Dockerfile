@@ -5,6 +5,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /usr/src/app
 
+# Recebe o build-arg do docker-compose e disponibiliza no ambiente para o prisma generate
+ARG DATABASE_URL="postgresql://postgres:postgres@postgres:5432/vtx_db?schema=public"
+ENV DATABASE_URL=${DATABASE_URL}
+
 COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
 
