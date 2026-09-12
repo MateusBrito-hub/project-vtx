@@ -2,6 +2,7 @@ import express from 'express'
 import helmet from 'helmet'
 import { corsMiddleware } from './shared/config/cors'
 import routes from './routes'
+import tenantRoutes from './modules/tenant/config/tenant-config.routes'
 
 export const app = express()
 
@@ -20,5 +21,6 @@ app.get('/health', (req, res) => {
     return res.json({ status: 'running' })
 })
 
+app.use('/api/tenant', tenantRoutes)
 app.use(routes)
 
