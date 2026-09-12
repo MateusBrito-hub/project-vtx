@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/tenant-prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// -------------------------------------------------------------
+// 1. Enums Fiscais e da Reforma Tributária (IBS / CBS / IS)
+// -------------------------------------------------------------
+
+enum EnvironmentType {
+  HOMOLOGATION
+  PRODUCTION
+}
+
+enum TaxRegime {
+  SIMPLES_NACIONAL          // CRT 1
+  SIMPLES_EXCESSO_SUBLIMITE // CRT 2
+  REGIME_NORMAL             // CRT 3 (Não cumulativo pleno)
+}
+
+enum TaxReformClass {
+  PADRAO              // Alíquota cheia (IBS + CBS)
+  REDUZIDA_60         // Redução de 60% (saúde, educação, etc.)
+  REDUZIDA_30         // Redução de 30% (serviços regulamentados)
+  CESTA_BASICA_ISENTA // Alíquota zero
+  IMPOSTO_SELETIVO    // Incidência de IS ("Imposto do Pecado")
+  IMUNE_ISENTO        // Livros, exportações, etc.
+}
+
+enum DocumentModel {
+  NFE_55  // NF-e
+  NFCE_65 // NFC-e
+}
+
+enum DocumentStatus {
+  DRAFT
+  VALIDATED
+  SIGNED
+  TRANSMITTING
+  AUTHORIZED
+  REJECTED
+  CANCELED
+  DENIED
+}
+
+enum PaymentType {
+  DINHEIRO_01
+  CHEQUE_02
+  CARTAO_CREDITO_03
+  CARTAO_DEBITO_04
+  CREDITO_LOJA_05
+  VALE_ALIMENTACAO_10
+  VALE_REFEICAO_11
+  PIX_17
+  SEM_PAGAMENTO_90
+  OUTROS_99
+}
+
+enum EventType {
+  CANCELAMENTO
+  CCE
+  INUTILIZACAO
+}
+
+// -------------------------------------------------------------
+// 2. Multiempresa: Matriz e Filiais do Tenant
+// -------------------------------------------------------------
+
+model Company {
+  id             Int           @id @default(autoincrement())
+  isHeadquarter  Boolean       @default(true)
+  cnpj           String        @unique
+  ie             String?
+  im             String?
+  socialName     String
+  fantasyName    String
+  street         String
+  number         String
+  complement     String?
+  district       String
+  cityCode       String        // Código IBGE de 7 dígitos
+  cityName       String
+  uf             String
+  zipCode        String
+  phone          String?
+
+  fiscalConfig   FiscalConfig?
+  documents      FiscalDocument[]
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+// -------------------------------------------------------------
+// 3. Configuração Fiscal por Filial (Séries, CSC e A1)
+// -------------------------------------------------------------
+
+model FiscalConfig {
+  id                     Int             @id @default(autoincrement())
+  companyId              Int             @unique
+  company                Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  environment            EnvironmentType @default(HOMOLOGATION)
+  taxRegime              TaxRegime       @default(SIMPLES_NACIONAL)
+  enableTaxReform        Boolean         @default(true)
+
+  // Controle sequencial por filial
+  nfeSeries              Int             @default(1)
+  nfeNextNumber          Int             @default(1)
+  nfceSeries             Int             @default(1)
+  nfceNextNumber         Int             @default(1)
+
+  // Certificado Digital A1 Criptografado (AES-256-GCM em Repouso)
+  certificatePfxBase64   String?         @db.Text
+  certificatePasswordEnc String?         @db.Text
+  certificateExpiresAt   DateTime?
+  certificateCnpj        String?
+
+  // NFC-e CSC (Código de Segurança do Contribuinte)
+  cscIdToken             String?
+  cscToken               String?
+
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+}
+
+// -------------------------------------------------------------
+// 4. Clientes e Destinatários (Princípio do Destino)
+// -------------------------------------------------------------
+
+model Customer {
+  id          Int              @id @default(autoincrement())
+  cpfCnpj     String           @unique
+  name        String
+  fantasyName String?
+  ie          String?
+  indicadorIe Int              @default(9) // 1=Contribuinte, 2=Isento, 9=Não Contribuinte
+  email       String?
+  phone       String?
+
+  street      String
+  number      String
+  complement  String?
+  district    String
+  cityCode    String           // Código IBGE (determina IBS Municipal)
+  cityName    String
+  uf          String           // Determina IBS Estadual
+  zipCode     String
+
+  documents   FiscalDocument[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+}
+
+// -------------------------------------------------------------
+// 5. Catálogo de Produtos e Regras Fiscais
+// -------------------------------------------------------------
+
+model Product {
+  id               Int                  @id @default(autoincrement())
+  sku              String               @unique
+  description      String
+  ncm              String               // 8 dígitos NCM
+  cest             String?              // 7 dígitos CEST
+  unit             String               // "UN", "KG", etc.
+  price            Decimal              @db.Decimal(12, 2)
+  ean              String?
+  cfopDefault      String
+
+  // Reforma Tributária
+  taxReformClass   TaxReformClass       @default(PADRAO)
+  isSubjectToIS    Boolean              @default(false)
+  cstIbsCbsDefault String?              @default("01")
+
+  items            FiscalDocumentItem[]
+
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+}
+
+// -------------------------------------------------------------
+// 6. Documentos Fiscais Eletrônicos (NF-e / NFC-e)
+// -------------------------------------------------------------
+
+model FiscalDocument {
+  id                Int                  @id @default(autoincrement())
+  companyId         Int
+  company           Company              @relation(fields: [companyId], references: [id])
+  model             DocumentModel        @default(NFE_55)
+  series            Int
+  number            Int
+  accessKey         String?              @unique
+  naturezaOp        String               @default("VENDA DE MERCADORIA")
+  tipoOp            Int                  @default(1) // 0=Entrada, 1=Saída
+  status            DocumentStatus       @default(DRAFT)
+
+  emissionDate      DateTime             @default(now())
+  authorizationDate DateTime?
+
+  customerId        Int?
+  customer          Customer?            @relation(fields: [customerId], references: [id])
+
+  totalProducts     Decimal              @db.Decimal(12, 2)
+  totalDiscount     Decimal              @default(0) @db.Decimal(12, 2)
+  totalInvoice      Decimal              @db.Decimal(12, 2)
+
+  // Tributos Legados (Período de Transição 2026-2032)
+  totalTaxIcms      Decimal              @default(0) @db.Decimal(12, 2)
+  totalTaxPis       Decimal              @default(0) @db.Decimal(12, 2)
+  totalTaxCofins    Decimal              @default(0) @db.Decimal(12, 2)
+  totalTaxIpi       Decimal              @default(0) @db.Decimal(12, 2)
+
+  // Reforma Tributária (IVA Dual: IBS + CBS + IS)
+  totalIbsEstadual  Decimal              @default(0) @db.Decimal(12, 2)
+  totalIbsMunicipal Decimal              @default(0) @db.Decimal(12, 2)
+  totalIbs          Decimal              @default(0) @db.Decimal(12, 2)
+  totalCbs          Decimal              @default(0) @db.Decimal(12, 2)
+  totalIS           Decimal              @default(0) @db.Decimal(12, 2)
+
+  // Retorno SEFAZ
+  protocolNumber    String?
+  cStat             String?
+  xMotivo           String?
+  xmlSigned         String?              @db.Text
+  xmlDistribution   String?              @db.Text
+
+  items             FiscalDocumentItem[]
+  events            FiscalEvent[]
+  payments          FiscalPayment[]
+
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@unique([companyId, model, series, number])
+}
+
+// -------------------------------------------------------------
+// 7. Itens do Documento Fiscal (Apuração Item a Item)
+// -------------------------------------------------------------
+
+model FiscalDocumentItem {
+  id                Int            @id @default(autoincrement())
+  documentId        Int
+  document          FiscalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  itemNumber        Int
+  productId         Int
+  product           Product        @relation(fields: [productId], references: [id])
+  description       String
+  ncm               String
+  cfop              String
+  unit              String
+  quantity          Decimal        @db.Decimal(12, 4)
+  unitPrice         Decimal        @db.Decimal(12, 4)
+  totalPrice        Decimal        @db.Decimal(12, 2)
+  discount          Decimal        @default(0) @db.Decimal(12, 2)
+
+  // Apuração da Reforma Tributária
+  cstIbsCbs         String?        // CST do IBS/CBS
+  taxReformClass    TaxReformClass @default(PADRAO)
+  baseIbs           Decimal        @default(0) @db.Decimal(12, 2)
+  aliqIbsEstadual   Decimal        @default(0) @db.Decimal(5, 2)
+  valorIbsEstadual  Decimal        @default(0) @db.Decimal(12, 2)
+  aliqIbsMunicipal  Decimal        @default(0) @db.Decimal(5, 2)
+  valorIbsMunicipal Decimal        @default(0) @db.Decimal(12, 2)
+  valorIbsTotal     Decimal        @default(0) @db.Decimal(12, 2)
+  baseCbs           Decimal        @default(0) @db.Decimal(12, 2)
+  aliqCbs           Decimal        @default(0) @db.Decimal(5, 2)
+  valorCbs          Decimal        @default(0) @db.Decimal(12, 2)
+  baseIS            Decimal        @default(0) @db.Decimal(12, 2)
+  aliqIS            Decimal        @default(0) @db.Decimal(5, 2)
+  valorIS           Decimal        @default(0) @db.Decimal(12, 2)
+
+  createdAt         DateTime       @default(now())
+
+  @@unique([documentId, itemNumber])
+}
+
+// -------------------------------------------------------------
+// 8. Formas de Pagamento e Split Payment
+// -------------------------------------------------------------
+
+model FiscalPayment {
+  id                  Int            @id @default(autoincrement())
+  documentId          Int
+  document            FiscalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  paymentType         PaymentType    @default(DINHEIRO_01)
+  amount              Decimal        @db.Decimal(12, 2)
+
+  // Split Payment (Reforma Tributária)
+  splitPaymentEnabled Boolean        @default(false)
+  splitBankCode       String?
+  splitIspb           String?
+  splitCnpjRecipient  String?
+  splitAmountIbs      Decimal        @default(0) @db.Decimal(12, 2)
+  splitAmountCbs      Decimal        @default(0) @db.Decimal(12, 2)
+
+  createdAt           DateTime       @default(now())
+}
+
+// -------------------------------------------------------------
+// 9. Eventos Fiscais (Cancelamento, CC-e, Inutilização)
+// -------------------------------------------------------------
+
+model FiscalEvent {
+  id               Int            @id @default(autoincrement())
+  documentId       Int
+  document         FiscalDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  eventType        EventType
+  sequenceNumber   Int            @default(1)
+  protocolNumber   String?
+  cStat            String?
+  xMotivo          String?
+  correctionReason String?        @db.Text
+  xmlEvent         String?        @db.Text
+  eventDate        DateTime       @default(now())
+
+  createdAt        DateTime       @default(now())
+}

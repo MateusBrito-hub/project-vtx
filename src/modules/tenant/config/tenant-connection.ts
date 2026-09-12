@@ -1,6 +1,6 @@
 import { Pool, PoolConfig } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'
-import { PrismaClient } from '../../../generated/prisma/client'
+import { PrismaClient as TenantPrismaClient } from '../../../generated/tenant-prisma/client'
 
 export interface TenantConnectionOptions {
   maxPoolSize?: number
@@ -84,7 +84,7 @@ export function getTenantConnectionString(rawSlug: string, baseUrl?: string): st
  * Gerenciador dinâmico de conexões de tenant (Multi-tenant Connection Router).
  * Mantém em cache pools do pg e instâncias do adaptador Prisma, isolados por slug.
  */
-export class TenantConnectionManager<TClient = any> {
+export class TenantConnectionManager<TClient = TenantPrismaClient> {
   private connections = new Map<string, TenantConnectionEntry<TClient>>()
   private options: Required<TenantConnectionOptions>
   private clientFactory: TenantClientFactory<TClient>
@@ -99,9 +99,9 @@ export class TenantConnectionManager<TClient = any> {
       connectionTimeoutMillis: options.connectionTimeoutMillis ?? 5000
     }
 
-    // Default factory usa PrismaClient padrão
+    // Default factory usa TenantPrismaClient com adaptador pg
     this.clientFactory = clientFactory || ((adapter: PrismaPg) => {
-      return new PrismaClient({ adapter }) as unknown as TClient
+      return new TenantPrismaClient({ adapter }) as unknown as TClient
     })
   }
 
@@ -251,6 +251,6 @@ export class TenantConnectionManager<TClient = any> {
 // Instância Singleton padrão exportada para o sistema
 export const tenantConnectionManager = new TenantConnectionManager()
 
-export function getTenantPrisma(slug: string): any {
+export function getTenantPrisma(slug: string): TenantPrismaClient {
   return tenantConnectionManager.getTenantPrisma(slug)
 }
