@@ -1,295 +1,297 @@
 <div align="center">
 
-# 🏢 VTX Core
+# 🏢 Plataforma VTX — Ecossistema Fiscal Multi-Tenant
 
-**API de gestão multi-tenant de clientes, planos e assinaturas**
+**Plataforma modular de alta escalabilidade para gestão de clientes, controle de quotas de assinatura e emissão de Documentos Fiscais Eletrônicos (NF-e / NFC-e) com suporte à Reforma Tributária (IBS / CBS / IS)**
 
 ![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)
 ![Express](https://img.shields.io/badge/Express-5-000000?logo=express&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
-![Vitest](https://img.shields.io/badge/tested%20with-vitest-6E9F18?logo=vitest&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-53%20passed%20(100%25)-6E9F18?logo=vitest&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Multi--Stage%20Non--Root-2496ED?logo=docker&logoColor=white)
+![Security](https://img.shields.io/badge/Security-OWASP%20Certified-success?logo=shieldsdotio&logoColor=white)
 ![License](https://img.shields.io/badge/license-ISC-blue)
 
 </div>
 
 ---
 
-## 📖 Sobre o projeto
+## 📖 Visão Geral do Ecossistema VTX
 
-O **VTX Core** é o backend responsável por gerenciar o ciclo de vida de **clientes (tenants)**, seus **planos de assinatura** e o **provisionamento automático de banco de dados isolado por cliente**.
+O projeto **VTX** é um ecossistema corporativo distribuído em três camadas complementares, projetado para aliar governança administrativa centralizada, autonomia operacional por cliente e resiliência de vendas físicas no ponto de venda:
 
-Cada cliente cadastrado recebe seu próprio banco PostgreSQL dedicado (`vtx_<slug>`), criado automaticamente pela API no momento do cadastro — a base arquitetural para uma futura evolução multi-tenant com isolamento total de dados.
+```mermaid
+flowchart TD
+    subgraph Layer1["1. VTX Core (Backoffice Central & Governança) — CONCLUÍDO ✅"]
+        CoreAPI["API Core (Porta 4000)"]
+        CoreDB[("PostgreSQL Central: vtx_core")]
+        CoreAPI --> CoreDB
+    end
+
+    subgraph Layer2["2. VTX Tenant (Motor Fiscal Cloud & Multi-Filial) — EM DESENVOLVIMENTO 🚀"]
+        TenantAPI["API Fiscal do Tenant (Porta 5000)"]
+        Router["Tenant Connection Router & Subdomain Resolver"]
+        TenantAPI --> Router
+        
+        subgraph DedicatedDBs["Bancos Dedicados Isolados por Tenant"]
+            DB1[("vtx_empresa_a")]
+            DB2[("vtx_empresa_b")]
+            DBN[("vtx_...")]
+        end
+        Router --> DB1
+        Router --> DB2
+        Router --> DBN
+    end
+
+    subgraph Layer3["3. VTX PDV (Frente de Caixa Desktop & Offline) — PLANEJADO 🛒"]
+        PDV["Terminal de Caixa Local (Tauri + TypeScript + SQLite)"]
+        Printer["Impressora Térmica 80mm"]
+        PDV --> Printer
+    end
+
+    subgraph External["SEFAZ & Tributação"]
+        SEFAZ["Web Services SEFAZ (SVRS / Estadual)"]
+    end
+
+    TenantAPI -.->|"Valida Quota (maxDocs)"| CoreAPI
+    TenantAPI -->|"Transmissão NF-e/NFC-e"| SEFAZ
+    PDV -->|"1. Sincroniza Catálogo & Preços"| TenantAPI
+    PDV -->|"2. Descarrega Vendas Offline (tpEmis = 9)"| TenantAPI
+```
+
+### As 3 Camadas do Produto:
+
+1. **VTX Core (Concluído & Homologado ✅):**
+   * Backend administrativo central da plataforma (`admin.vtx.com.br` ou porta `4000`).
+   * Responsável pelo cadastro de tenants (`Client`), gestão de planos (`Plan`), faturamento de assinaturas (`Subscription`), controle de cotas de emissão (`maxDocs`), auditoria, controle de acessos (RBAC) e provisionamento automatizado de bancos dedicados.
+2. **VTX Tenant — Sistema Fiscal & Gerencial (Em Desenvolvimento Ativo - Fase 2 🚀):**
+   * Backend operacional e gerencial acessado pelo subdomínio de cada empresa (`slug.dominio.com.br` ou porta `5000`).
+   * Opera sobre o banco PostgreSQL dedicado da empresa (`vtx_<slug>`), gerenciando matriz e filiais (`Company`), catálogo compartilhado de produtos, cadastro de clientes, motor de tributação híbrido (ICMS/PIS/COFINS + Reforma Tributária IBS/CBS/IS), emissão de NF-e (55) e NFC-e (65), e mensageria nativa com a SEFAZ.
+3. **VTX PDV Desktop (Planejado - Fase 3 🛒):**
+   * Aplicação client-side em repositório dedicado (`project-vtx-pdv`) voltada para o computador do caixa no comércio físico.
+   * Arquitetura em **Tauri (Rust Core) + TypeScript (UI) + SQLite local**, garantindo **operação 100% offline** através de contingência NFC-e legal (`tpEmis = 9`) e sincronização resiliente (*store-and-forward*).
 
 ---
 
 ## 📑 Sumário
 
-- [Stack e principais dependências](#-stack-e-principais-dependências)
-- [Arquitetura](#-arquitetura)
-- [Estrutura de pastas](#-estrutura-de-pastas)
-- [Modelo de dados](#-modelo-de-dados)
-- [Como rodar o projeto](#-como-rodar-o-projeto)
-- [Variáveis de ambiente](#-variáveis-de-ambiente)
-- [Scripts disponíveis](#-scripts-disponíveis)
-- [Referência da API](#-referência-da-api)
-- [Autenticação e permissões](#-autenticação-e-permissões)
-- [Testes](#-testes)
-- [Roadmap e débito técnico](#-roadmap-e-débito-técnico)
-- [Como contribuir](#-como-contribuir)
+- [Decisões Estratégicas e Arquiteturais](#-decisões-estratégicas-e-arquiteturais)
+- [Status de Desenvolvimento do Projeto](#-status-de-desenvolvimento-do-projeto)
+- [Stack e Principais Tecnologias](#-stack-e-principais-tecnologias)
+- [Arquitetura de Dados (Core vs Tenant)](#-arquitetura-de-dados-core-vs-tenant)
+- [Como Rodar o Projeto](#-como-rodar-o-projeto)
+- [Variáveis de Ambiente](#-variáveis-de-ambiente)
+- [Scripts Disponíveis](#-scripts-disponíveis)
+- [Autenticação, Permissões e Segurança](#-autenticação-permissões-e-segurança)
+- [Testes Automatizados e Homologação](#-testes-automatizados-e-homologação)
+- [Diretrizes de Colaboração e Governança](#-diretrizes-de-colaboração-e-governança)
 
 ---
 
-## 🧰 Stack e principais dependências
+## 🏛️ Decisões Estratégicas e Arquiteturais
 
-| Camada | Tecnologia |
-| --- | --- |
-| Runtime | Node.js 20 |
-| Linguagem | TypeScript |
-| Framework HTTP | Express 5 |
-| ORM | Prisma 7 (`@prisma/client`, `@prisma/adapter-pg`) |
-| Banco de dados | PostgreSQL 16 |
-| Autenticação | JWT (`jsonwebtoken`) + `bcryptjs` |
-| Validação de entrada | Zod (e Yup, em uso pontual) |
-| Testes | Vitest |
-| Containerização | Docker / Docker Compose |
+Todas as decisões técnicas do ecossistema foram avaliadas pelo Product Owner e arquitetadas para aliar **produtividade de desenvolvimento**, **custo operacional mínimo** e **escalabilidade elástica**:
 
----
-
-## 🏗️ Arquitetura
-
-O projeto segue uma organização **modular por domínio** (`auth`, `client`, `plan`, `subscription`), cada módulo com suas próprias camadas de **controller → service → repository**, e um núcleo `shared/` com autenticação, validação e acesso a banco reutilizáveis entre módulos.
-
-```mermaid
-flowchart LR
-    A[Cliente HTTP] --> B["/auth/login"]
-    A --> C[Middleware de Auth<br/>JWT]
-    C --> D[Middleware de Role<br/>SUPER_ADMIN / ADMIN / OPERATOR]
-    D --> E[Controller]
-    E --> F[Service]
-    F --> G[Repository]
-    G --> H[(Prisma)]
-    H --> I[(PostgreSQL)]
-    F -.provisiona.-> J[("Banco dedicado<br/>vtx_&lt;slug&gt;")]
-```
-
-**Fluxo de criação de cliente:** ao criar um `Client`, o `client.service` abre uma transação Prisma para validar o plano e persistir o cliente + assinatura inicial e, em seguida, aciona o `database-manager` para provisionar um banco PostgreSQL isolado (`vtx_<slug>`) para aquele tenant.
+1. **Monorepo com Runtime Segregado (Opção A):**
+   * O código de `vtx-core` e `vtx-tenant` reside no mesmo repositório Git, facilitando compartilhamento de tipagens TypeScript, DTOs Zod e orquestração Docker Compose.
+   * Em produção, operam como **dois serviços independentes em runtime** (`vtx-core` na porta 4000 e `vtx-tenant` na porta 5000), permitindo escalonamento elástico independente (o motor fiscal pode escalar para 20 réplicas durante picos de vendas sem sobrecarregar o Core administrativo).
+2. **Database-per-Tenant com Roteamento Dinâmico:**
+   * Cada tenant opera em um banco PostgreSQL dedicado (`vtx_<slug>`), criado automaticamente no cadastro.
+   * Elimina o problema de concorrência (*Noisy Neighbor Problem*), atende com rigor à LGPD e permite mover o banco de um cliente grande para outra instância sem refatorar código.
+3. **Multiempresa (Matriz e Filiais Centralizadas):**
+   * O tenant representa a organização/grupo econômico, e a tabela `Company` gerencia as filiais.
+   * O usuário acessa uma única URL (`slug.dominio.com.br`), faz login uma única vez e alterna entre filiais pelo topo da tela (*Company Switcher*), compartilhando catálogo de produtos e clientes, mas com séries, numerações e certificados digitais A1 isolados por filial.
+4. **Reforma Tributária Nativa (Future-Proof):**
+   * O motor fiscal nasce compatível com a Emenda Constitucional 132/2023 e PLP 68/2024.
+   * Suporte nativo à coexistência durante a transição (2026–2032): apuração simultânea de ICMS/PIS/COFINS e do novo **IVA Dual: IBS (Estadual/Municipal), CBS (Federal), Imposto Seletivo (IS)** e preparação para **Split Payment**.
+5. **Motor Fiscal Proprietário (Zero Custo com Intermediários):**
+   * Geração própria de XML padrão PL_009_V4, assinatura digital XMLDSig via Certificado A1 e comunicação direta via SOAP/WSDL com os servidores da SEFAZ, eliminando taxas por nota de gateways terceiros (Focus, PlugNotas, etc.).
+6. **Criptografia de Certificados A1 em Repouso:**
+   * Certificados PFX e senhas armazenados com criptografia **AES-256-GCM** e chaves derivadas por HKDF vinculadas ao `slug` do tenant.
+7. **Conexão por Subdomínio (`slug.dominio.com.br`):**
+   * Roteamento automático via subdomínio ou cabeçalho `X-Tenant-Slug`, com suporte a DNS Wildcard e certificados SSL da Let's Encrypt / Cloudflare.
 
 ---
 
-## 📂 Estrutura de pastas
+## 📊 Status de Desenvolvimento do Projeto
 
-```
-src/
-├── app.ts                     # Configuração do Express (middlewares globais, rotas)
-├── index.ts                   # Entry point — sobe o servidor HTTP
-├── routes/
-│   └── index.ts                # Composição das rotas de cada módulo
-├── modules/
-│   ├── auth/                   # Login e emissão de token
-│   ├── client/                 # CRUD e ciclo de vida de clientes (tenants)
-│   ├── plan/                   # CRUD de planos de assinatura
-│   └── subscription/           # CRUD e ciclo de vida de assinaturas
-└── shared/
-    ├── auth/                   # jwt.ts, auth.middleware.ts, role.middleware.ts
-    ├── database/                # Prisma client + provisionamento de bancos por tenant
-    ├── validation/              # Schemas Zod compartilhados
-    └── utils/                   # Coleção Insomnia com exemplos de requisições
-
-prisma/
-├── schema.prisma               # Modelos: Client, Plan, Subscription, User
-└── migrations/                  # Histórico de migrations
-```
-
-Cada módulo de domínio segue o mesmo padrão interno:
-
-```
-modules/<dominio>/
-├── <dominio>.routes.ts       # Definição das rotas + middlewares de autorização
-├── <dominio>.controller.ts   # Camada HTTP (request/response)
-├── <dominio>.service.ts      # Regras de negócio
-├── <dominio>.repository.ts   # Acesso a dados via Prisma
-├── <dominio>.schema.ts       # Validação de entrada (Zod), quando aplicável
-└── <dominio>.interface.ts    # Tipos TypeScript do domínio
-```
+| Fase | Domínio | Escopo / Módulos | Status | Veredicto do PO |
+|:---:|---|---|:---:|:---:|
+| **Fase 1** | **VTX Core** | Sprints 1 a 4: Contenção de Riscos, Blindagem Zod, PII (LGPD), Logout JWT, Trust Proxy, Deploy Docker e Certificação Geral de Segurança. | 🟢 **100% CONCLUÍDO** | **Homologado com Certificado Executivo de Segurança (53 testes verdes / 0 falhas).** |
+| **Fase 2** | **VTX Tenant** | Sprints 1 a 4: Fundação Multi-Tenant, Multi-Filial, Reforma Tributária (IBS/CBS), Emissão NF-e (55) / NFC-e (65), Assinatura A1 e Transmissão SEFAZ. | 🟡 **EM DESENVOLVIMENTO** | **Sprint 1 (Fundação e Banco Dedicado) em andamento.** |
+| **Fase 3** | **VTX PDV Desktop** | Repositório `project-vtx-pdv`: Terminal de caixa offline em Tauri + TypeScript + SQLite, contingência `tpEmis = 9` e sincronização bidirecional. | ⚪ **PLANEJADO** | **Início previsto após a conclusão da Fase 2.** |
 
 ---
 
-## 🗃️ Modelo de dados
+## 🧰 Stack e Principais Tecnologias
 
-| Entidade | Descrição |
-| --- | --- |
-| **Client** | Representa o tenant/cliente: razão social, documentos, endereço, `slug` único e vínculo com um `Plan` |
-| **Plan** | Plano de assinatura: nome, preço, limite de documentos (`maxDocs`) e status |
-| **Subscription** | Assinatura vigente de um `Client`, vinculada 1:1, com valor e status |
-| **User** | Usuário interno da plataforma (`SUPER_ADMIN`, `ADMIN` ou `OPERATOR`) que autentica via `/auth/login` |
+| Camada | Tecnologia | Detalhe |
+|---|---|---|
+| **Runtime** | Node.js 20 LTS (Alpine) | Imagem Docker multi-stage minimalista (161 MB) |
+| **Linguagem** | TypeScript 5.9 | Tipagem estrita em modo `strict` |
+| **Framework HTTP** | Express 5 | Middlewares customizados e arquitetura modular |
+| **ORM / Banco Central** | Prisma 7 + `@prisma/adapter-pg` | PostgreSQL 16 com driver adapter de alta performance |
+| **Bancos Dedicados** | PostgreSQL 16 (`vtx_<slug>`) | Provisionamento dinâmico e isolamento total de dados |
+| **Segurança & Criptografia** | AES-256-GCM, HKDF, Helmet, JWT, bcryptjs | Envelope Encryption para A1 e sanitização PII |
+| **Validação de Entrada** | Zod (`.strict()`) | Proteção contra Mass Assignment em 100% dos controllers |
+| **Testes Automatizados** | Vitest 4 | 53 testes automatizados (unitários, integração e segurança) |
+| **Containerização** | Docker & Docker Compose | Usuário non-root (`node`), migrações automáticas determinísticas |
 
 ---
 
-## 🚀 Como rodar o projeto
+## 🏗️ Arquitetura de Dados (Core vs Tenant)
+
+O ecossistema divide a persistência em dois esquemas lógicos claros:
+
+### 1. Banco de Dados Central (`vtx_core`)
+Controla a administração da plataforma, faturamento e catálogo de tenants:
+* **`Client`**: Tenant cadastrado (razão social, CNPJ, `slug` único, status e vínculo com o plano).
+* **`Plan`**: Plano contratado, valor da mensalidade e limite de notas (`maxDocs`).
+* **`Subscription`**: Assinatura ativa vinculada ao cliente.
+* **`User`**: Usuários administrativos centrais (`SUPER_ADMIN`, `ADMIN`, `OPERATOR`).
+
+### 2. Banco de Dados Dedicado do Tenant (`vtx_<slug>`)
+Armazena a operação diária e os dados fiscais sensíveis de cada contratante:
+* **`Company`**: Matriz e filiais da rede (CNPJ, IE, endereço fiscal, certificado A1 e numerações).
+* **`User` / `UserCompany`**: Usuários da empresa (gerentes, caixas, faturistas) com permissões por filial.
+* **`Customer`**: Destinatários fiscais com validação do código IBGE do município (Princípio do Destino).
+* **`Product`**: Catálogo de itens com NCM, CEST e categorias da Reforma Tributária.
+* **`FiscalDocument` / `FiscalDocumentItem`**: Cabeçalho e itens de NF-e e NFC-e com apuração híbrida (ICMS/PIS/COFINS + IBS/CBS/IS).
+* **`FiscalPayment`**: Formas de pagamento e dados para **Split Payment**.
+* **`FiscalEvent`**: Cancelamentos, Cartas de Correção (CC-e) e Inutilizações.
+
+---
+
+## 🚀 Como Rodar o Projeto
 
 ### Pré-requisitos
+* Node.js 20+
+* Docker e Docker Compose
 
-- Node.js 20+
-- Docker e Docker Compose (recomendado) **ou** uma instância PostgreSQL local
-
-### Opção 1 — Com Docker Compose (recomendado)
-
+### Opção 1 — Execução Integrada em Contêineres (Recomendado)
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/MateusBrito-hub/project-vtx.git
 cd project-vtx
-docker compose up --build
+
+# 2. Configure as variáveis de ambiente
+cp .env.example .env
+
+# 3. Suba o banco e a API com compilação multi-stage
+docker compose up -d --build
 ```
+A API compila o código TypeScript, executa as migrações do Prisma automaticamente no boot (`prisma migrate deploy`) e sobe sob usuário não-root `node` na porta `4000`.
 
-Isso sobe o Postgres e a API já conectados entre si. A API fica disponível em `http://localhost:4000`.
-
-### Opção 2 — Ambiente local
-
+### Opção 2 — Execução em Desenvolvimento Local
 ```bash
-git clone https://github.com/MateusBrito-hub/project-vtx.git
-cd project-vtx
 npm install --legacy-peer-deps
+cp .env.example .env
 
-cp .env.example .env   # configure suas variáveis (ver seção abaixo)
-
+# Gera os artefatos de modelo do Prisma
 npx prisma generate
-npx prisma migrate dev
 
+# Executa o servidor de desenvolvimento com hot-reload
 npm run dev
 ```
 
-A API sobe por padrão na porta `4000` (`GET /health` para verificar se está no ar).
-
 ---
 
-## 🔑 Variáveis de ambiente
+## 🔑 Variáveis de Ambiente
 
 | Variável | Obrigatória | Descrição |
-| --- | --- | --- |
-| `DATABASE_URL` | ✅ | String de conexão do PostgreSQL principal (ex.: `postgresql://user:pass@host:5432/vtx`) |
-| `JWT_SECRET` | ✅ | Segredo usado para assinar e validar os tokens JWT |
-| `JWT_ISSUER` | ❌ | Issuer incluído/validado no token (padrão: `project-vtx`) |
-| `PORT` | ❌ | Porta HTTP da API (padrão: `4000`) |
-
-> ⚠️ Nunca versione o arquivo `.env`. Use um cofre de segredos (Vault, AWS Secrets Manager, etc.) em produção.
+|---|:---:|---|
+| `DATABASE_URL` | ✅ | URL de conexão do PostgreSQL central (`postgresql://user:pass@host:5432/vtx_core?schema=public`) |
+| `POSTGRES_USER` | ✅ | Usuário do container PostgreSQL no `docker-compose` |
+| `POSTGRES_PASSWORD` | ✅ | Senha do container PostgreSQL no `docker-compose` |
+| `POSTGRES_DB` | ✅ | Nome da base principal (`vtx_core`) |
+| `JWT_SECRET` | ✅ | Chave secreta de alta entropia para assinatura de tokens JWT |
+| `JWT_ISSUER` | ❌ | Emissor do token JWT (padrão: `project-vtx`) |
+| `PORT` | ❌ | Porta HTTP do Core (padrão: `4000`) |
+| `CORS_ALLOWED_ORIGINS`| ❌ | Whitelist de origens autorizadas separadas por vírgula (ex: `https://vtx.com.br`) |
+| `AUTH_RATE_LIMIT_WINDOW_MINUTES` | ❌ | Janela de tempo do rate limiting de login em minutos (padrão: `15`) |
+| `AUTH_RATE_LIMIT_MAX` | ❌ | Máximo de tentativas falhas de login antes do bloqueio HTTP 429 (padrão: `5`) |
 
 ---
 
-## 📜 Scripts disponíveis
+## 📜 Scripts Disponíveis
 
 | Comando | Descrição |
-| --- | --- |
-| `npm run dev` | Sobe a API em modo desenvolvimento (`ts-node-dev`, com hot-reload) |
-| `npm run build` | Compila o TypeScript para `dist/` |
-| `npm start` | Executa a versão compilada (`dist/index.js`) |
-| `npm test` | Executa a suíte de testes com Vitest |
+|---|---|
+| `npm run dev` | Inicia o servidor em modo de desenvolvimento (`ts-node-dev`) |
+| `npm run build` | Compila o projeto TypeScript para código de produção em `dist/` (`tsc`) |
+| `npm start` | Executa os binários JavaScript compilados em `dist/index.js` |
+| `npm test` | Executa a suíte de testes com Vitest em modo watch |
+| `npm test -- --run` | Executa todos os 53 testes automatizados de forma unificada |
 
 ---
 
-## 🌐 Referência da API
+## 🔒 Autenticação, Permissões e Segurança
 
-Todas as rotas abaixo (exceto `/auth/login` e `/health`) exigem o header `Authorization: Bearer <token>`.
-
-### Auth
-
-| Método | Rota | Acesso |
-|---|---|---|
-| `POST` | `/auth/login` | Público |
-
-### Clients
-
-| Método | Rota | Roles permitidas |
-| --- | --- | --- |
-| `POST` | `/clients` | `SUPER_ADMIN` |
-| `GET` | `/clients` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `GET` | `/clients/:id` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `PATCH` | `/clients/:id/update` | `SUPER_ADMIN`, `ADMIN` |
-| `PATCH` | `/clients/:id/suspend` | `SUPER_ADMIN`, `ADMIN` |
-| `PATCH` | `/clients/:id/cancel` | `SUPER_ADMIN`, `ADMIN` |
-| `PATCH` | `/clients/:id/active` | `SUPER_ADMIN`, `ADMIN` |
-| `GET` | `/clients/:slug/status` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-
-### Plans
-
-| Método | Rota | Roles permitidas |
-| --- | --- | --- |
-| `POST` | `/plans` | `SUPER_ADMIN` |
-| `GET` | `/plans` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `GET` | `/plans/:id` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `PATCH` | `/plans/:id` | `SUPER_ADMIN`, `ADMIN` |
-| `PATCH` | `/plans/:id/suspend` | `SUPER_ADMIN` |
-| `PATCH` | `/plans/:id/activate` | `SUPER_ADMIN` |
-
-### Subscriptions
-
-| Método | Rota | Roles permitidas |
-| --- | --- | --- |
-| `POST` | `/subscriptions` | `SUPER_ADMIN` |
-| `GET` | `/subscriptions` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `GET` | `/subscriptions/:id` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `GET` | `/subscriptions/client/:clientId` | `SUPER_ADMIN`, `ADMIN`, `OPERATOR` |
-| `PATCH` | `/subscriptions/:id` | `SUPER_ADMIN`, `ADMIN` |
-| `PATCH` | `/subscriptions/:id/suspend` | `SUPER_ADMIN` |
-| `PATCH` | `/subscriptions/:id/activate` | `SUPER_ADMIN` |
-
-### Health check
-
-| Método | Rota | Acesso |
-|---|---|---|
-| `GET` | `/health` | Público |
-
-> 💡 Uma coleção pronta para o **Insomnia** com exemplos de payload está em `src/shared/utils/Endpoints.yaml`.
+A API foi auditada e blindada através de um programa formal de segurança (Sprints 1 a 4):
+* **Rate Limiting Restrito:** Bloqueio por IP real do cliente via `app.set('trust proxy', 1)` em `POST /auth/login` (HTTP 429 após 5 tentativas falhas consecutivas).
+* **Controle de Acesso Baseado em Papéis (RBAC):** Hierarquia estrita (`SUPER_ADMIN` > `ADMIN` > `OPERATOR`).
+* **Proteção de Dados PII (LGPD):** Serializador dinâmico suprime CPF/CNPJ, documentos de proprietários e dados de endereço completo para a role `OPERATOR`.
+* **Revogação de Tokens & Logout Server-Side:** Endpoint `POST /auth/logout` com blacklist de tokens em memória gerenciada por TTL; tokens revogados são imediatamente bloqueados pelo middleware (HTTP 401).
+* **Cabeçalhos de Segurança (Helmet):** HSTS, NoSniff, FrameGuard e supressão de `X-Powered-By`.
+* **CORS Restrito:** Rejeição explícita (HTTP 403 Forbidden) para origens não cadastradas na whitelist.
 
 ---
 
-## 🔐 Autenticação e permissões
+## 🧪 Testes Automatizados e Homologação
 
-- Login em `POST /auth/login` (email + senha) retorna um **access token JWT** válido por 15 minutos, assinado com `HS256`.
-- O token carrega `sub` (id do usuário) e `role`.
-- Toda rota fora de `/auth` passa pelo `authMiddleware` (valida o token) e, em seguida, pelo `requireRole(...)` (valida a permissão específica do endpoint).
-- Hierarquia de papéis: `SUPER_ADMIN` > `ADMIN` > `OPERATOR`.
-
----
-
-## 🧪 Testes
+A suíte de testes utiliza **Vitest** com mocks isolados do Prisma singleton para garantir execução determinística e rápida:
 
 ```bash
-npm test
+npm test -- --run
 ```
 
-Os testes usam **Vitest** com mocks do Prisma Client (via `vi.hoisted`) para isolar a camada de serviço do banco de dados real.
+```text
+ Test Files  9 passed (9)
+      Tests  53 passed (53)
+   Duration  ~5.0s
+```
 
-> **Nota para contribuidores:** a suíte em `test/client.test.ts` ainda referencia caminhos de uma estrutura anterior à modularização atual (`src/service/client`, por exemplo) e precisa ser atualizada para importar de `src/modules/client/*`. Ver item correspondente no plano de correções técnicas do projeto antes de confiar no resultado de `npm test`.
+Suítes validadas na regressão contínua:
+* `test/helmet.test.ts` (Cabeçalhos HTTP de segurança)
+* `test/cors.test.ts` (Whitelist dinâmica e bloqueio 403)
+* `test/auth.limiter.test.ts` (Rate limiting e proteção contra força bruta)
+* `test/auth.logout.test.ts` (Revogação de JWT e blacklist de tokens)
+* `test/client.pii.test.ts` (Sanitização de dados cadastrais e LGPD)
+* `test/client.test.ts` (CRUD de tenants e integridade de planos)
+* `test/subscription.schema.test.ts` (Zod `.strict()` em assinaturas)
+* `test/plan.schema.test.ts` (Zod `.strict()` em planos)
+* `test/error-handling.test.ts` (Tratamento seguro de erros 500 sem vazamento)
 
 ---
 
-## 🗺️ Roadmap e débito técnico
+## 🤝 Diretrizes de Colaboração e Governança
 
-Este repositório passou por uma análise de segurança formal, cujos achados e o plano de correção (dividido em sprints) orientam as próximas contribuições prioritárias:
+Para manter a consistência e o alto nível técnico do projeto, todo desenvolvedor ou contribuidor deve seguir as seguintes diretrizes:
 
-- Rate limiting no login, restrição de CORS e rotação de credenciais de banco.
-- Validação estrita (Zod) no endpoint de atualização de assinatura.
-- Padronização do tratamento de erros expostos pela API.
-- Hardening da imagem Docker de produção (multi-stage, usuário non-root).
-- Correção e ampliação da cobertura de testes automatizados.
-
-Consulte o relatório de segurança e o plano de sprints do projeto para o detalhamento completo antes de abrir uma PR relacionada a esses pontos.
-
----
-
-## 🤝 Como contribuir
-
-1. Crie uma branch a partir de `development`: `git checkout -b feat/minha-contribuicao`
-2. Siga o padrão modular já existente (`routes → controller → service → repository`) ao adicionar funcionalidades.
-3. Sempre que adicionar um endpoint que recebe body, valide a entrada com um schema Zod `.strict()`, seguindo o padrão de `client.schema.ts`.
-4. Rode `npm test` e `npx tsc --noEmit` antes de abrir a PR.
-5. Descreva na PR o que foi alterado e, se aplicável, referencie o item do roadmap/plano de sprints correspondente.
+1. **Governança de Sprints e Tasks:**
+   * O projeto opera sob a metodologia de governança orientada pelo Product Owner (PO);
+   * Nenhuma task deve ser considerada concluída sem a execução dos testes automatizados e aprovação formal do relatório de alterações em `test/docs/`.
+2. **Padrão de Branching:**
+   * Crie branches a partir da `master` seguindo o padrão: `feat/nome-da-funcionalidade` ou `fix/nome-da-correcao`.
+3. **Validação Estrita de Entrada (Zod):**
+   * Todo endpoint que recebe payload no `req.body` ou parâmetros no `req.params` **deve obrigatoriamente** implementar validação via schema Zod com `.strict()`, rejeitando Mass Assignment com HTTP 400.
+   * Não utilize interfaces TypeScript soltas para dados externos; prefira tipos inferidos (`z.infer<typeof schema>`).
+4. **Camadas Arquiteturais Claras:**
+   * Mantenha o desacoplamento estrito: `Routes` ➔ `Controller` ➔ `Service` ➔ `Repository`.
+   * Controllers não executam queries no banco; repositories não manipulam objetos `req` ou `res`.
+5. **Critérios de Pull Request:**
+   * Antes de submeter código, execute localmente:
+     ```bash
+     npm run build          # Compilação TypeScript limpa (código 0)
+     npm test -- --run      # 100% dos testes verdes sem filtros
+     ```
 
 ---
 
 <div align="center">
 
-Feito com 🛠️ e TypeScript.
+Feito com 🛠️, TypeScript e rigor de engenharia de software.
 
 </div>
