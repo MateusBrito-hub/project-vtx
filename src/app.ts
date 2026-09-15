@@ -2,7 +2,7 @@ import express from 'express'
 import helmet from 'helmet'
 import { corsMiddleware } from './shared/config/cors'
 import routes from './routes'
-import tenantRoutes from './modules/tenant/config/tenant-config.routes'
+import tenantRoutes from './modules/tenant/tenant.routes'
 
 export const app = express()
 
