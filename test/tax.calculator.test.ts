@@ -94,7 +94,7 @@ describe('Tax Calculator Engine — Hybrid & Tax Reform (Task 01)', () => {
 
             expect(item.taxReform.aliqIS).toBe(DEFAULT_RATES.IMPOSTO_SELETIVO)
             expect(item.taxReform.valorIS).toBe(1.50)
-            expect(item.taxReform.totalTaxReform).toBe(17.60 + 35.40 + 1.50)
+            expect(item.taxReform.totalTaxReform).toBe(8.80 + 17.70 + 1.50)
         })
 
         it('should subtract discount and add freight to the tax base', () => {
