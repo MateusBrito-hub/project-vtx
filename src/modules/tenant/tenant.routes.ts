@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { tenantMiddleware } from './tenant.middleware'
 import tenantConfigRoutes from './config/tenant-config.routes'
 import productRoutes from './product/product.routes'
+import customerRoutes from './customer/customer.routes'
 
 const tenantRoutes = Router()
 
@@ -9,7 +10,8 @@ const tenantRoutes = Router()
 tenantRoutes.use(tenantMiddleware)
 
 // Submódulos integrados sob o roteador do tenant:
-tenantRoutes.use('/', tenantConfigRoutes)        // expõe /companies, /fiscal/config, /fiscal/certificate
-tenantRoutes.use('/products', productRoutes)     // expõe /products
+tenantRoutes.use('/', tenantConfigRoutes)           // expõe /companies, /fiscal/config, /fiscal/certificate
+tenantRoutes.use('/products', productRoutes)        // expõe /products
+tenantRoutes.use('/customers', customerRoutes)     // expõe /customers
 
 export default tenantRoutes
