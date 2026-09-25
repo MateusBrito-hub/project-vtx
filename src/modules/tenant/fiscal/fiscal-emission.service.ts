@@ -94,13 +94,13 @@ export class FiscalEmissionService {
 
         if (!fiscalConfig.certificatePfxBase64 || !fiscalConfig.certificatePasswordEnc) {
             const error = new Error('A1 Digital Certificate is not installed or configured for this company.')
-            ;(error as any).code = 'CERTIFICATE_NOT_CONFIGURED'
+                ; (error as any).code = 'CERTIFICATE_NOT_CONFIGURED'
             throw error
         }
 
         if (input.model === '65' && (!fiscalConfig.cscIdToken || !fiscalConfig.cscToken)) {
             const error = new Error('NFC-e emission requires CSC (cscIdToken and cscToken) configured in FiscalConfig.')
-            ;(error as any).code = 'CSC_NOT_CONFIGURED'
+                ; (error as any).code = 'CSC_NOT_CONFIGURED'
             throw error
         }
 
@@ -111,7 +111,7 @@ export class FiscalEmissionService {
 
         if (certInfo.isExpired) {
             const error = new Error(`Company A1 Digital Certificate expired on ${certInfo.expiresAt.toISOString()}.`)
-            ;(error as any).code = 'CERTIFICATE_EXPIRED'
+                ; (error as any).code = 'CERTIFICATE_EXPIRED'
             throw error
         }
 
@@ -145,7 +145,7 @@ export class FiscalEmissionService {
 
         if (input.model === '55' && !resolvedCustomer) {
             const error = new Error('Customer (destinatário) is mandatory for NF-e (Model 55) emission.')
-            ;(error as any).code = 'CUSTOMER_REQUIRED'
+                ; (error as any).code = 'CUSTOMER_REQUIRED'
             throw error
         }
 
@@ -204,7 +204,7 @@ export class FiscalEmissionService {
                 customer: resolvedCustomer!,
                 items: input.items,
                 payments: input.payments,
-                infCpl: input.infCpl
+                additionalInfo: input.infCpl
             })
         } else {
             buildResult = buildNFCeXml({
@@ -218,9 +218,10 @@ export class FiscalEmissionService {
                 vTroco: input.vTroco,
                 cscIdToken: fiscalConfig.cscIdToken!,
                 cscToken: fiscalConfig.cscToken!,
-                isContingency: input.isContingency,
-                contingencyReason: input.contingencyReason,
-                infCpl: input.infCpl
+                tpEmis: input.isContingency ? 9 : 1,
+                dhCont: input.isContingency ? new Date() : undefined,
+                xJust: input.contingencyReason,
+                additionalInfo: input.infCpl
             })
         }
 
