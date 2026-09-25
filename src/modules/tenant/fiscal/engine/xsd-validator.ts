@@ -132,7 +132,7 @@ export function validateFiscalXml(xml: string): XsdValidationResult {
     if (!xml.includes('<Signature xmlns="http://www.w3.org/2000/09/xmldsig#">') && !xml.includes('<Signature')) {
         errors.push('Missing digital signature <Signature>')
     } else {
-        if (!xml.includes('<SignedInfo>') || !xml.includes('<SignatureValue>') || !xml.includes('<KeyInfo>')) {
+        if (!xml.includes('<SignedInfo') || !xml.includes('<SignatureValue>') || !xml.includes('<KeyInfo>')) {
             errors.push('Incomplete <Signature> structure (missing SignedInfo, SignatureValue or KeyInfo)')
         }
         if (!xml.includes('<DigestValue>')) {
@@ -158,8 +158,8 @@ export function assertValidFiscalXml(xml: string): void {
     const result = validateFiscalXml(xml)
     if (!result.isValid) {
         const error = new Error(`Fiscal XML schema validation failed:\n- ${result.errors.join('\n- ')}`)
-        ;(error as any).code = 'XSD_VALIDATION_ERROR'
-        ;(error as any).errors = result.errors
+            ; (error as any).code = 'XSD_VALIDATION_ERROR'
+            ; (error as any).errors = result.errors
         throw error
     }
 }
