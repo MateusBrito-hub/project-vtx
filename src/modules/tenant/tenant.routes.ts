@@ -4,6 +4,7 @@ import tenantConfigRoutes from './config/tenant-config.routes'
 import productRoutes from './product/product.routes'
 import customerRoutes from './customer/customer.routes'
 import { quotaService } from './fiscal/quota.service'
+import { fiscalEmissionService } from './fiscal/fiscal-emission.service'
 
 const tenantRoutes = Router()
 
@@ -17,6 +18,16 @@ tenantRoutes.get('/fiscal/quota', async (req, res) => {
         return res.status(200).json(quota)
     } catch (err: any) {
         return res.status(500).json({ error: err.message })
+    }
+})
+
+tenantRoutes.post('/fiscal/emit', async (req, res) => {
+    try {
+        const result = await fiscalEmissionService.emit(req.tenantSlug!, req.tenantPrisma!, req.body)
+        return res.status(201).json(result)
+    } catch (err: any) {
+        const statusCode = (err.code === 'QUOTA_EXCEEDED' || err.code === 'INACTIVE_SUBSCRIPTION') ? 403 : 400
+        return res.status(statusCode).json({ error: err.message, code: err.code, errors: err.errors })
     }
 })
 
