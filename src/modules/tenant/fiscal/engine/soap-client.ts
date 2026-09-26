@@ -175,7 +175,7 @@ export function buildSoapEnvelope(serviceName: SefazService, payloadXml: string)
  * Extrai o conteúdo XML contido dentro de <soap12:Body> ou <soap:Body>.
  */
 export function extractSoapBody(responseXml: string): string {
-    const bodyMatch = responseXml.match(/<[^:]*:?Body[^>]*>([\s\S]*?)<\/[^:]*:?Body>/i)
+    const bodyMatch = responseXml.match(/<(?:\w+:)?Body[^>]*>([\s\S]*?)<\/(?:\w+:)?Body>/i)
     if (!bodyMatch || !bodyMatch[1]) {
         return responseXml.trim()
     }
@@ -290,7 +290,7 @@ export async function sendSoapRequest(options: SoapRequestOptions): Promise<Soap
         req.on('timeout', () => {
             req.destroy()
             const error = new Error(`SEFAZ connection timeout after ${timeoutMs}ms`)
-            ;(error as any).code = 'SEFAZ_TIMEOUT'
+                ; (error as any).code = 'SEFAZ_TIMEOUT'
             reject(error)
         })
 
