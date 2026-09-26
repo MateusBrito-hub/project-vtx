@@ -23,7 +23,7 @@ import { validateFiscalXml } from '../src/modules/tenant/fiscal/engine/xsd-valid
 import { fiscalEmissionService } from '../src/modules/tenant/fiscal/fiscal-emission.service'
 
 describe('End-to-End Fiscal Emission & XSD Validation (Task 04 - Sprint 3)', () => {
-    const TENANT_SLUG = 'vtx-supermercado'
+    const TENANT_SLUG = 'vtx_supermercado'
     let testCertPem: string
     let testPrivateKeyPem: string
     let testP12Base64: string
